@@ -1,4 +1,4 @@
-import { BasesEntry, BasesEntryGroup, BasesViewConfig } from 'obsidian';
+import { App, BasesEntry, BasesEntryGroup, TFolder } from 'obsidian';
 
 export interface GroupNode {
 	key: string;
@@ -83,21 +83,26 @@ export function buildFolderGroups(groups: BasesEntryGroup[]): Map<string, GroupN
 }
 
 /**
- * Whether Bases' native "Group by" is currently set to the file.folder
- * property. `BasesConfigFileView.groupBy` isn't part of the typed public
- * API (it's declared as an empty object), so this reads the raw config
- * value defensively — a bare property id, or an object carrying one under
- * `property` — and treats anything else as "not grouped by folder" so
- * ordinary tag/property nesting is unaffected if the shape is ever wrong.
+ * Whether Bases' native "Group by" is currently set to file.folder (or
+ * anything else that groups by real vault folders). There's no public API
+ * for reading which property a view is grouped by — `BasesViewConfig.get`
+ * only returns this plugin's own declared options, not Bases' native
+ * config, and no `getGroupBy()` exists alongside `getOrder()`/`getSort()` —
+ * so this infers it from the data instead: if every group's key is the
+ * path of a folder that actually exists in the vault, it's a folder
+ * grouping. A tag or arbitrary property would need every distinct value to
+ * coincidentally collide with a real folder path, which doesn't happen in
+ * practice.
  */
-export function isGroupedByFolder(config: BasesViewConfig): boolean {
-	const raw = config.get('groupBy');
-	if (typeof raw === 'string') return raw === 'file.folder';
-	if (raw && typeof raw === 'object') {
-		const prop = (raw as { property?: unknown }).property;
-		if (typeof prop === 'string') return prop === 'file.folder';
+export function isGroupedByFolder(app: App, groups: BasesEntryGroup[]): boolean {
+	let sawKeyedGroup = false;
+	for (const group of groups) {
+		if (!group.hasKey() || !group.key) continue;
+		sawKeyedGroup = true;
+		const path = group.key.toString();
+		if (!(app.vault.getAbstractFileByPath(path) instanceof TFolder)) return false;
 	}
-	return false;
+	return sawKeyedGroup;
 }
 
 export function countEntries(node: GroupNode): number {

@@ -92,7 +92,7 @@ export class NotionBoardView extends BasesView {
 
 		let hiddenGroups = this.config.get('hiddenGroups') as string[];
 		if (!Array.isArray(hiddenGroups)) hiddenGroups = [];
-		const folderGrouped = isGroupedByFolder(this.config);
+		const folderGrouped = isGroupedByFolder(this.app, this.data.groupedData);
 
 		for (const group of this.data.groupedData) {
 			const rawGroupKey = group.hasKey() && group.key ? group.key.toString() : 'No Status';

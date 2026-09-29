@@ -53,8 +53,6 @@ export class NotionTableView extends BasesView {
 	private collapsedGroups = new Set<string>();
 	/** The open select editor, if any (also drives outside-click detection). */
 	private selectEditor: SelectEditor | null = null;
-	/** TEMP debug: log the real groupBy config shape once, to fix isGroupedByFolder's guess. */
-	private loggedGroupByDebug = false;
 
 	constructor(controller: QueryController, parentEl: HTMLElement) {
 		super(controller);
@@ -193,11 +191,7 @@ export class NotionTableView extends BasesView {
 		if (limitRaw === undefined) limitRaw = 50;
 		const limit = limitRaw === 'all' ? 'all' : parseInt(String(limitRaw), 10) || 50;
 
-		if (!this.loggedGroupByDebug) {
-			this.loggedGroupByDebug = true;
-			console.log(`${LOG_PREFIX} DEBUG groupBy config:`, this.config.get('groupBy'));
-		}
-		const folderGrouped = isGroupedByFolder(this.config);
+		const folderGrouped = isGroupedByFolder(this.app, this.data.groupedData);
 		const roots = folderGrouped
 			? buildFolderGroups(this.data.groupedData)
 			: buildGroupTree(this.data.groupedData);
