@@ -369,9 +369,16 @@
 /* ---------------- Group rows ---------------- */
 
 .ntn-group-row td {
-	padding: 14px 8px 6px;
+	background: transparent;
+	/* Extra top padding gives each new group breathing room from the one
+	   above; the first group (nothing above it) doesn't need it. */
+	padding: 28px 8px 6px;
 	padding-left: var(--ntn-indent, 8px);
 	border-bottom: 1px solid var(--ntn-border);
+}
+
+.ntn-group-row:first-child td {
+	padding-top: 6px;
 }
 
 .ntn-group-toggle {
