@@ -21,6 +21,7 @@ import {
 import { LOG_PREFIX, NOTION_BOARD_VIEW } from '../constants';
 import { PinnedColors, applyPillColor, colorByName } from '../lib/colors';
 import { PillDetection, computePillProps, parsePinnedColors, stripPath } from '../lib/pills';
+import { isGroupedByFolder } from '../lib/groups';
 import { getPropertyMetaType } from '../lib/property-types';
 import { valueToStrings } from '../lib/values';
 import { NotePageModal, OpenSelectOpts } from './note-modal';
@@ -91,6 +92,7 @@ export class NotionBoardView extends BasesView {
 
 		let hiddenGroups = this.config.get('hiddenGroups') as string[];
 		if (!Array.isArray(hiddenGroups)) hiddenGroups = [];
+		const folderGrouped = isGroupedByFolder(this.config);
 
 		for (const group of this.data.groupedData) {
 			const rawGroupKey = group.hasKey() && group.key ? group.key.toString() : 'No Status';
@@ -112,20 +114,30 @@ export class NotionBoardView extends BasesView {
 				});
 				menu.showAtMouseEvent(evt);
 			});
-			const parts = rawGroupKey === 'No Status' ? ['No Status'] : rawGroupKey.split('/');
-			
 			const headerTitles = colHeader.createDiv({ cls: 'ntn-board-column-titles' });
 
-			for (let i = 0; i < parts.length; i++) {
-				const part = parts[i];
-				const pill = headerTitles.createSpan({ cls: 'ntn-pill' });
-				const currentFullKey = parts.slice(0, i + 1).join('/');
-				this.applyPillColor(pill, currentFullKey);
-				pill.setText(part);
-				if (i > 0) {
-					// Nested group levels step in; the stylesheet reads the offset.
-					pill.addClass('ntn-board-header-pill-nested');
-					pill.setCssProps({ '--ntn-indent': `${i * 12}px` });
+			if (folderGrouped) {
+				// One flat label for the folder that directly contains these
+				// files — not the pill-per-level stack below, and not the full
+				// vault-root-down path.
+				const lastSlash = rawGroupKey.lastIndexOf('/');
+				const label = rawGroupKey === 'No Status'
+					? rawGroupKey
+					: (lastSlash === -1 ? rawGroupKey : rawGroupKey.slice(lastSlash + 1));
+				headerTitles.createSpan({ cls: 'ntn-group-folder-label', text: label });
+			} else {
+				const parts = rawGroupKey === 'No Status' ? ['No Status'] : rawGroupKey.split('/');
+				for (let i = 0; i < parts.length; i++) {
+					const part = parts[i];
+					const pill = headerTitles.createSpan({ cls: 'ntn-pill' });
+					const currentFullKey = parts.slice(0, i + 1).join('/');
+					this.applyPillColor(pill, currentFullKey);
+					pill.setText(part);
+					if (i > 0) {
+						// Nested group levels step in; the stylesheet reads the offset.
+						pill.addClass('ntn-board-header-pill-nested');
+						pill.setCssProps({ '--ntn-indent': `${i * 12}px` });
+					}
 				}
 			}
 			

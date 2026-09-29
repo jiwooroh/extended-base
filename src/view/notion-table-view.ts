@@ -23,7 +23,7 @@ import {
 import { LOG_PREFIX, NOTION_TABLE_VIEW } from '../constants';
 import { PinnedColors, applyPillColor, colorByName } from '../lib/colors';
 import { PillDetection, computePillProps, parsePinnedColors, stripPath } from '../lib/pills';
-import { buildGroupTree, countEntries, GroupNode } from '../lib/groups';
+import { buildFolderGroups, buildGroupTree, countEntries, GroupNode, isGroupedByFolder } from '../lib/groups';
 import { getPropertyIcon, getPropertyMetaType } from '../lib/property-types';
 import { valueToStrings } from '../lib/values';
 import { NotePageModal, OpenSelectOpts } from './note-modal';
@@ -191,7 +191,10 @@ export class NotionTableView extends BasesView {
 		if (limitRaw === undefined) limitRaw = 50;
 		const limit = limitRaw === 'all' ? 'all' : parseInt(String(limitRaw), 10) || 50;
 
-		const roots = buildGroupTree(this.data.groupedData);
+		const folderGrouped = isGroupedByFolder(this.config);
+		const roots = folderGrouped
+			? buildFolderGroups(this.data.groupedData)
+			: buildGroupTree(this.data.groupedData);
 		if (sortState) {
 			for (const rootNode of roots.values()) this.applySortToTree(rootNode, sortState);
 		}
@@ -220,9 +223,13 @@ export class NotionTableView extends BasesView {
 					this.onDataUpdated();
 				});
 
-				const pill = gCell.createSpan({ cls: 'ntn-pill' });
-				this.applyPillColor(pill, node.fullKey);
-				pill.setText(node.key);
+				if (folderGrouped) {
+					gCell.createSpan({ cls: 'ntn-group-folder-label', text: node.key });
+				} else {
+					const pill = gCell.createSpan({ cls: 'ntn-pill' });
+					this.applyPillColor(pill, node.fullKey);
+					pill.setText(node.key);
+				}
 				gCell.createSpan({ cls: 'ntn-group-count', text: String(countEntries(node)) });
 			}
 

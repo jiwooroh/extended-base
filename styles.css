@@ -398,6 +398,15 @@
 	font-size: 12px;
 }
 
+/* file.folder groups: the plain folder name, not a colored pill — a folder
+   isn't a tag/value that deserves a color swatch, and this also doubles as
+   the board column header label (already bold via .ntn-board-column-header). */
+.ntn-group-folder-label {
+	font-weight: 600;
+	font-size: 14px;
+	color: var(--ntn-text);
+}
+
 /* ---------------- "+ New" footer ---------------- */
 
 .ntn-new-row {
