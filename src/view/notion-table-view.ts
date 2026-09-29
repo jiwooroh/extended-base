@@ -223,13 +223,9 @@ export class NotionTableView extends BasesView {
 					this.onDataUpdated();
 				});
 
-				if (folderGrouped) {
-					gCell.createSpan({ cls: 'ntn-group-folder-label', text: node.key });
-				} else {
-					const pill = gCell.createSpan({ cls: 'ntn-pill' });
-					this.applyPillColor(pill, node.fullKey);
-					pill.setText(node.key);
-				}
+				const pill = gCell.createSpan({ cls: 'ntn-pill' });
+				this.applyPillColor(pill, node.fullKey);
+				pill.setText(node.key);
 				gCell.createSpan({ cls: 'ntn-group-count', text: String(countEntries(node)) });
 			}
 

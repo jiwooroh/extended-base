@@ -368,7 +368,11 @@
 
 /* ---------------- Group rows ---------------- */
 
-.ntn-group-row td {
+/* Doubled class + .ntn-root prefix: reading mode's .markdown-rendered td
+   rules (and some themes') carry enough specificity to win over a bare
+   ".ntn-group-row td" and silently eat the padding — same trick used for
+   .ntn-th.ntn-th / .ntn-td.ntn-td elsewhere in this file. */
+.ntn-root .ntn-group-row.ntn-group-row td {
 	background: transparent;
 	/* Extra top padding gives each new group breathing room from the one
 	   above; the first group (nothing above it) doesn't need it. */
@@ -377,7 +381,7 @@
 	border-bottom: 1px solid var(--ntn-border);
 }
 
-.ntn-group-row:first-child td {
+.ntn-root .ntn-group-row.ntn-group-row:first-child td {
 	padding-top: 6px;
 }
 
@@ -403,15 +407,6 @@
 	margin-left: 8px;
 	color: var(--ntn-text-muted);
 	font-size: 12px;
-}
-
-/* file.folder groups: the plain folder name, not a colored pill — a folder
-   isn't a tag/value that deserves a color swatch, and this also doubles as
-   the board column header label (already bold via .ntn-board-column-header). */
-.ntn-group-folder-label {
-	font-weight: 600;
-	font-size: 14px;
-	color: var(--ntn-text);
 }
 
 /* ---------------- "+ New" footer ---------------- */
