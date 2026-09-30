@@ -111,9 +111,11 @@ export class NotionListView extends BasesView {
 				isCollapsed = this.collapsedGroups.has(node.fullKey);
 
 				const gRow = listContainer.createDiv({ cls: 'ntn-group-row' });
-				// Indent by depth; the stylesheet reads this as padding-left.
-				const headerIndent = folderGrouped ? 0 : depth * 20;
-				gRow.setCssProps({ '--ntn-indent': `${headerIndent}px` });
+				// Inline style, not a CSS custom prop: some themes' broad
+				// div-padding resets have higher specificity than a var()
+				// read from a class selector, but nothing beats an inline style.
+				const headerIndent = folderGrouped ? 12 : (depth * 20) + 12;
+				gRow.setCssStyles({ paddingLeft: `${headerIndent}px` });
 
 				// Add toggle icon
 				const toggleIcon = gRow.createSpan({ cls: 'ntn-group-toggle' });
@@ -147,8 +149,8 @@ export class NotionListView extends BasesView {
 				if (node.key) {
 					// Indent entries slightly more than their group header
 					const leftEl = rowEl.querySelector<HTMLElement>('.ntn-list-left');
-					const entryIndent = folderGrouped ? 30 : (depth * 20) + 30;
-					leftEl?.setCssProps({ '--ntn-indent': `${entryIndent}px` });
+					const entryIndent = folderGrouped ? 32 : (depth * 20) + 30;
+					leftEl?.setCssStyles({ paddingLeft: `${entryIndent}px` });
 				}
 				renderedCount++;
 			}
