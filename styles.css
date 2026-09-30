@@ -1148,7 +1148,10 @@
 	background: var(--ntn-hover);
 }
 
-.ntn-list-left {
+/* Doubled class + .ntn-root prefix: same trick as the table's group-row
+   rule (see the comment above it) — without it, some themes' broader
+   div-padding resets silently ate the --ntn-indent offset. */
+.ntn-root .ntn-list-left.ntn-list-left {
 	flex: 1;
 	min-width: 0;
 	display: flex;
@@ -1157,8 +1160,12 @@
 	padding-left: var(--ntn-indent, 0);
 }
 
-.ntn-list-container .ntn-group-row {
-	padding-left: var(--ntn-indent, 0);
+.ntn-root .ntn-list-container .ntn-group-row.ntn-group-row {
+	display: flex;
+	align-items: center;
+	/* Same vertical padding as a normal row, so a group header takes up
+	   about one row's worth of height instead of an oversized gap. */
+	padding: 8px 12px 8px calc(12px + var(--ntn-indent, 0px));
 }
 
 .ntn-list-right {
