@@ -143,6 +143,37 @@ export function isGroupedByFolder(app: App, groups: BasesEntryGroup[]): boolean 
 	return sawKeyedGroup;
 }
 
+/**
+ * Drop the single absolute top-level folder from a folder-grouped tree —
+ * its own files fall into the ungrouped ('') bucket and its children
+ * become the new top-level groups — but only when there's exactly one
+ * root to begin with. With several unrelated top-level folders (no shared
+ * wrapper), each one's name is the only thing telling groups apart, so
+ * this leaves them alone rather than guessing which one is "the" root.
+ */
+export function hideSoleTopLevelFolder(roots: Map<string, GroupNode>): Map<string, GroupNode> {
+	const realRoots = [...roots.entries()].filter(([key]) => key !== '');
+	if (realRoots.length !== 1) return roots;
+
+	const [, top] = realRoots[0];
+	const result = new Map<string, GroupNode>();
+
+	const ungrouped = roots.get('');
+	if (top.entries.length || ungrouped) {
+		result.set('', {
+			key: '',
+			fullKey: '',
+			entries: [...(ungrouped?.entries ?? []), ...top.entries],
+			children: new Map(),
+		});
+	}
+	for (const [childKey, childNode] of top.children) {
+		result.set(childKey, childNode);
+	}
+
+	return result;
+}
+
 export function countEntries(node: GroupNode): number {
 	let count = node.entries.length;
 	for (const child of node.children.values()) {

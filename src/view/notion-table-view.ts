@@ -23,7 +23,7 @@ import {
 import { LOG_PREFIX, NOTION_TABLE_VIEW } from '../constants';
 import { PinnedColors, applyPillColor, colorByName } from '../lib/colors';
 import { PillDetection, computePillProps, parsePinnedColors, stripPath } from '../lib/pills';
-import { buildFolderGroups, buildGroupTree, countEntries, GroupNode, isGroupedByFolder } from '../lib/groups';
+import { buildFolderGroups, buildGroupTree, countEntries, GroupNode, hideSoleTopLevelFolder, isGroupedByFolder } from '../lib/groups';
 import { getPropertyIcon, getPropertyMetaType } from '../lib/property-types';
 import { valueToStrings } from '../lib/values';
 import { NotePageModal, OpenSelectOpts } from './note-modal';
@@ -193,7 +193,7 @@ export class NotionTableView extends BasesView {
 
 		const folderGrouped = isGroupedByFolder(this.app, this.data.groupedData);
 		const roots = folderGrouped
-			? buildFolderGroups(this.data.groupedData)
+			? hideSoleTopLevelFolder(buildFolderGroups(this.data.groupedData))
 			: buildGroupTree(this.data.groupedData);
 		if (sortState) {
 			for (const rootNode of roots.values()) this.applySortToTree(rootNode, sortState);
@@ -208,9 +208,12 @@ export class NotionTableView extends BasesView {
 				
 				const gRow = tbody.createEl('tr', { cls: 'ntn-group-row' });
 				const gCell = gRow.createEl('td', { attr: { colspan: String(colCount) } });
-				
+
 				// Indent by depth; the stylesheet reads this as padding-left.
-				gCell.setCssProps({ '--ntn-indent': `${(depth * 20) + 10}px` });
+				// Folder groups skip the step-per-level: every folder header
+				// sits at the same indent regardless of nesting depth.
+				const headerIndent = folderGrouped ? 10 : (depth * 20) + 10;
+				gCell.setCssProps({ '--ntn-indent': `${headerIndent}px` });
 				
 				const toggleIcon = gCell.createSpan({ cls: 'ntn-group-toggle' });
 				toggleIcon.setText(isCollapsed ? '▶' : '▼');
@@ -244,7 +247,8 @@ export class NotionTableView extends BasesView {
 					const firstVisibleCell = Array.from(tr.cells).find(
 						(c) => !c.hasClass('ntn-col-dummy'),
 					);
-					firstVisibleCell?.setCssProps({ '--ntn-indent': `${(depth * 20) + 30}px` });
+					const entryIndent = folderGrouped ? 30 : (depth * 20) + 30;
+					firstVisibleCell?.setCssProps({ '--ntn-indent': `${entryIndent}px` });
 				}
 				renderedCount++;
 			}

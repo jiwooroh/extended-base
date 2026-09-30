@@ -20,7 +20,7 @@ import {
 import { LOG_PREFIX, NOTION_LIST_VIEW } from '../constants';
 import { PinnedColors, applyPillColor, colorByName } from '../lib/colors';
 import { PillDetection, computePillProps, parsePinnedColors, stripPath } from '../lib/pills';
-import { buildGroupTree, countEntries, GroupNode } from '../lib/groups';
+import { buildFolderGroups, buildGroupTree, countEntries, GroupNode, hideSoleTopLevelFolder, isGroupedByFolder } from '../lib/groups';
 import { getPropertyMetaType } from '../lib/property-types';
 import { valueToStrings } from '../lib/values';
 import { NotePageModal, OpenSelectOpts } from './note-modal';
@@ -98,7 +98,10 @@ export class NotionListView extends BasesView {
 		const limitStr = String(limitRaw).trim();
 		const limit = (limitStr === 'all' || limitStr === '0') ? 'all' : parseInt(limitStr, 10) || 10;
 
-		const roots = buildGroupTree(this.data.groupedData);
+		const folderGrouped = isGroupedByFolder(this.app, this.data.groupedData);
+		const roots = folderGrouped
+			? hideSoleTopLevelFolder(buildFolderGroups(this.data.groupedData))
+			: buildGroupTree(this.data.groupedData);
 
 		const renderNode = (node: GroupNode, depth: number) => {
 			if (limit !== 'all' && renderedCount >= limit) return;
@@ -106,11 +109,12 @@ export class NotionListView extends BasesView {
 			let isCollapsed = false;
 			if (node.key) {
 				isCollapsed = this.collapsedGroups.has(node.fullKey);
-				
+
 				const gRow = listContainer.createDiv({ cls: 'ntn-group-row' });
 				// Indent by depth; the stylesheet reads this as padding-left.
-				gRow.setCssProps({ '--ntn-indent': `${depth * 20}px` });
-				
+				const headerIndent = folderGrouped ? 0 : depth * 20;
+				gRow.setCssProps({ '--ntn-indent': `${headerIndent}px` });
+
 				// Add toggle icon
 				const toggleIcon = gRow.createSpan({ cls: 'ntn-group-toggle' });
 				toggleIcon.setText(isCollapsed ? '▶' : '▼');
@@ -122,11 +126,15 @@ export class NotionListView extends BasesView {
 					}
 					this.onDataUpdated();
 				});
-				
-				const pill = gRow.createSpan({ cls: 'ntn-pill' });
-				this.applyPillColor(pill, node.fullKey);
-				pill.setText(node.key);
-				
+
+				if (folderGrouped) {
+					gRow.createSpan({ cls: 'ntn-group-folder-label', text: node.key });
+				} else {
+					const pill = gRow.createSpan({ cls: 'ntn-pill' });
+					this.applyPillColor(pill, node.fullKey);
+					pill.setText(node.key);
+				}
+
 				gRow.createSpan({ cls: 'ntn-group-count', text: String(countEntries(node)) });
 			}
 
@@ -139,7 +147,8 @@ export class NotionListView extends BasesView {
 				if (node.key) {
 					// Indent entries slightly more than their group header
 					const leftEl = rowEl.querySelector<HTMLElement>('.ntn-list-left');
-					leftEl?.setCssProps({ '--ntn-indent': `${(depth * 20) + 30}px` });
+					const entryIndent = folderGrouped ? 30 : (depth * 20) + 30;
+					leftEl?.setCssProps({ '--ntn-indent': `${entryIndent}px` });
 				}
 				renderedCount++;
 			}
