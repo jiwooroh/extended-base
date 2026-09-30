@@ -51,32 +51,70 @@ export function buildGroupTree(groups: BasesEntryGroup[]): Map<string, GroupNode
 }
 
 /**
- * Flat, single-level grouping for file.folder: one group per exact folder,
- * labeled with only the folder that directly contains its files — not the
- * full vault-root-down path buildGroupTree would nest through. A folder
- * path is still slash-separated like a hierarchical tag, so without this
- * "Projects/Research/AI" would otherwise render as three nested, collapsible
- * levels instead of a single "AI" group.
+ * Folder-aware grouping for file.folder: nests a group under the nearest
+ * *existing* ancestor group, not under every intermediate path segment the
+ * way buildGroupTree does. Each node is still labeled with just the folder
+ * that directly contains its own files, not the full vault-root-down path.
+ *
+ * Bases only produces a group for a folder that actually holds files
+ * directly — an intermediate folder that's just a pass-through (nothing
+ * of its own, only subfolders) never becomes a group at all. So
+ * "Masters/Application/Georgia Tech MS-HCI" with nothing directly in
+ * Masters or Masters/Application has no ancestor to nest under and
+ * renders as a root-level "Georgia Tech MS-HCI". But "UT Austin" (has its
+ * own files) and "UT Austin/Short Answer Questions" (a real subfolder,
+ * also with its own files) are both real groups, so the second nests
+ * under the first — exactly mirroring the vault's actual folder tree,
+ * rather than flattening every folder group to one level regardless of
+ * whether it's really nested inside another one that's also showing.
  */
 export function buildFolderGroups(groups: BasesEntryGroup[]): Map<string, GroupNode> {
 	const roots = new Map<string, GroupNode>();
+	const nodesByPath = new Map<string, GroupNode>();
+	const keyed: { path: string; entries: BasesEntry[] }[] = [];
 
 	for (const group of groups) {
 		if (!group.hasKey() || !group.key) {
 			roots.set('', { key: '', fullKey: '', entries: [...group.entries], children: new Map() });
 			continue;
 		}
+		keyed.push({ path: group.key.toString(), entries: group.entries });
+	}
 
-		const rawKey = group.key.toString();
-		const lastSlash = rawKey.lastIndexOf('/');
-		const displayKey = lastSlash === -1 ? rawKey : rawKey.slice(lastSlash + 1);
+	// Shallowest paths first, so a parent's node exists by the time a
+	// deeper path goes looking for it.
+	keyed.sort((a, b) => a.path.split('/').length - b.path.split('/').length);
 
-		roots.set(rawKey, {
-			key: displayKey || rawKey,
-			fullKey: rawKey,
-			entries: [...group.entries],
+	for (const { path, entries } of keyed) {
+		const lastSlash = path.lastIndexOf('/');
+		const displayKey = lastSlash === -1 ? path : path.slice(lastSlash + 1);
+		const node: GroupNode = {
+			key: displayKey || path,
+			fullKey: path,
+			entries: [...entries],
 			children: new Map(),
-		});
+		};
+		nodesByPath.set(path, node);
+
+		// Walk up the path looking for the nearest ancestor that's an
+		// actual group, skipping any intermediate segment that isn't one.
+		let parent: GroupNode | undefined;
+		let probe = lastSlash;
+		while (probe !== -1) {
+			const candidate = path.slice(0, probe);
+			const found = nodesByPath.get(candidate);
+			if (found) {
+				parent = found;
+				break;
+			}
+			probe = candidate.lastIndexOf('/');
+		}
+
+		if (parent) {
+			parent.children.set(path, node);
+		} else {
+			roots.set(path, node);
+		}
 	}
 
 	return roots;
