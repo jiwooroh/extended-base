@@ -156,6 +156,30 @@ export class NotionBoardView extends BasesView {
 			colNew.addEventListener('click', () => void this.createAndOpenPage());
 		}
 
+		// Hidden groups collapse to a narrow strip instead of disappearing —
+		// their name still reads (rotated) and clicking one un-hides it. All
+		// of them render after every visible column, so they line up at the
+		// right edge of the board rather than sitting wherever they used to be.
+		for (const group of this.data.groupedData) {
+			const rawGroupKey = group.hasKey() && group.key ? group.key.toString() : 'No Status';
+			if (!hiddenGroups.includes(rawGroupKey)) continue;
+
+			const lastSlash = rawGroupKey.lastIndexOf('/');
+			const label = (folderGrouped && rawGroupKey !== 'No Status')
+				? (lastSlash === -1 ? rawGroupKey : rawGroupKey.slice(lastSlash + 1))
+				: rawGroupKey;
+
+			const collapsed = boardContainer.createDiv({
+				cls: 'ntn-board-column-collapsed',
+				attr: { 'aria-label': `Show "${label}"` },
+			});
+			collapsed.createSpan({ cls: 'ntn-board-collapsed-label', text: label });
+			collapsed.createSpan({ cls: 'ntn-group-count', text: String(group.entries.length) });
+			collapsed.addEventListener('click', () => {
+				this.config.set('hiddenGroups', hiddenGroups.filter((k) => k !== rawGroupKey));
+			});
+		}
+
 		// ---- "+ New" footer for the entire board (if they want an unassigned note) ----
 		const footerWrap = root.createDiv({ cls: 'ntn-footer-wrap' });
 		const newRow = footerWrap.createDiv({ cls: 'ntn-new-row' });
