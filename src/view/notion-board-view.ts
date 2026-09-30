@@ -117,16 +117,15 @@ export class NotionBoardView extends BasesView {
 			const headerTitles = colHeader.createDiv({ cls: 'ntn-board-column-titles' });
 
 			if (folderGrouped) {
-				// One flat pill for the folder that directly contains these
-				// files — not the pill-per-level stack below, and not the full
-				// vault-root-down path.
+				// One flat, plain-text label for the folder that directly
+				// contains these files — not the pill-per-level stack below,
+				// and not the full vault-root-down path. A folder isn't a
+				// tag/value, so it doesn't get a colored chip.
 				const lastSlash = rawGroupKey.lastIndexOf('/');
 				const label = rawGroupKey === 'No Status'
 					? rawGroupKey
 					: (lastSlash === -1 ? rawGroupKey : rawGroupKey.slice(lastSlash + 1));
-				const pill = headerTitles.createSpan({ cls: 'ntn-pill' });
-				this.applyPillColor(pill, rawGroupKey);
-				pill.setText(label);
+				headerTitles.createSpan({ cls: 'ntn-group-folder-label', text: label });
 			} else {
 				const parts = rawGroupKey === 'No Status' ? ['No Status'] : rawGroupKey.split('/');
 				for (let i = 0; i < parts.length; i++) {

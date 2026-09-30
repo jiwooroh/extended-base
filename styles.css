@@ -409,6 +409,15 @@
 	font-size: 12px;
 }
 
+/* file.folder groups: a bold plain label, not a colored pill — a folder
+   isn't a tag/value that deserves a color swatch. Used for both the
+   table's group-row label and the board's column header label. */
+.ntn-group-folder-label {
+	font-weight: 700;
+	font-size: 14px;
+	color: var(--ntn-text);
+}
+
 /* ---------------- "+ New" footer ---------------- */
 
 .ntn-new-row {
