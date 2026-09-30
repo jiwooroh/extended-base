@@ -159,8 +159,33 @@
 
 			<details class="release" open>
 				<summary>
-					<span class="ver">1.0.6</span>
+					<span class="ver">1.0.7</span>
 					<span class="tag">Latest</span>
+				</summary>
+				<div class="body">
+					<ul>
+						<li>Added: the table view's column headers now stay visible while
+							scrolling through a long list of rows — the table gets its own
+							scroll region so the header can pin to its top.</li>
+						<li>Changed: grouping by <code>file.folder</code> now renders as a
+							single flat level — just the folder that directly contains the
+							files, not the full vault-root-down path — as a bold plain-text
+							label instead of a colored pill, in both the table and board
+							views.</li>
+						<li>Added: breathing room between consecutive groups in the table
+							view, and the group-header row no longer picks up a background
+							from elsewhere.</li>
+						<li>Added: hiding a board column (right-click → <strong>Hide
+							group</strong>) no longer drops it without a trace — it collapses
+							to a narrow strip at the right edge of the board with the group's
+							name rotated vertically; click it to bring the column back.</li>
+					</ul>
+				</div>
+			</details>
+
+			<details class="release">
+				<summary>
+					<span class="ver">1.0.6</span>
 				</summary>
 				<div class="body">
 					<ul>

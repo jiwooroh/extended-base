@@ -223,6 +223,24 @@ Source layout:
 
 ## Changelog
 
+### 1.0.7
+
+- **Added:** the table view's column headers now stay visible while
+  scrolling through a long list of rows — the table gets its own scroll
+  region so the header can pin to its top.
+- **Changed:** grouping by `file.folder` now renders as a single flat
+  level — just the folder that directly contains the files, not the full
+  vault-root-down path — as a bold plain-text label instead of a colored
+  pill, in both the table and board views. Detected by checking whether a
+  group's key is an actual folder in the vault, since Bases has no public
+  API for reading which property a view is grouped by.
+- **Added:** breathing room between consecutive groups in the table view,
+  and the group-header row no longer picks up a background from elsewhere.
+- **Added:** hiding a board column (right-click → *Hide group*) no longer
+  drops it without a trace — it collapses to a narrow strip at the right
+  edge of the board with the group's name rotated vertically; click it to
+  bring the column back.
+
 ### 1.0.6
 
 - **Fixed:** text and multitext cells truncated at the first `/` — pill/path
