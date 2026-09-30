@@ -25,15 +25,20 @@ colors, select editor, inline editing, and page panel.
 
 The full database grid.
 
+- **Sticky header** — column headers stay pinned at the top while you
+  scroll through a long list of rows.
 - **Resizable columns** — drag the border between two headers; widths are
-  saved per view.
+  saved per view and aren't capped once you've resized past the default.
+- **Drag to reorder, click to sort** — press and drag a header to move
+  the column; a plain click sorts by it (ascending → descending → off).
 - **Rename a column** — double-click a header title, type, Enter. The
   original property name is untouched; only the display name changes.
-- **Per-column right-click menu** — toggle text wrapping for that column,
-  and (for pill columns) turn the automatic pill colors off so values
-  render plain.
+- **Per-column right-click menu** — **Change icon** (a searchable Lucide
+  icon picker) and **Change property name**, plus toggling text wrapping
+  and (for pill columns) turning off automatic pill colors.
 - **Property-type icons** — each header shows an icon matching the
-  property's type (text, number, checkbox, date, tags).
+  property's type (text, number, checkbox, date, tags), or whatever icon
+  you've picked for it.
 - **Nested collapsible groups** — see [Nested groups](#nested-groups).
 - **Row limit** — a subtle `Rows: 50 ▾` control in the footer caps how
   many rows render (10 / 20 / 50 / All).
@@ -55,11 +60,16 @@ one card per note.
 - Cards show the note title plus every visible property.
 - Notes with no group value collect under **No Status**.
 - Each column has its own **+ New** at the bottom.
-- Right-click a column header → **Hide group** to drop it from the board
-  (stored in the *Hidden groups* view option).
+- Right-click a column header → **Hide group** to collapse it to a narrow
+  strip at the right edge of the board, its name rotated vertically —
+  click the strip to bring the column back. (Which groups are collapsed
+  is stored in the *Hidden groups* view option.)
 
 Group keys containing `/` render as stacked, indented pills in the column
-header — so `Project/Alpha` shows both levels.
+header — so `Project/Alpha` shows both levels. Grouping by the built-in
+`file.folder` property is the one exception: since a folder path isn't
+really a tag, each column header instead shows just the immediate folder
+name as a bold plain-text label (see [Nested groups](#nested-groups)).
 
 > Cards are not drag-and-drop yet; change a note's group from the card's
 > own pill cell or the page panel.
@@ -74,6 +84,15 @@ everything beneath it. Click **▼** / **▶** on any header to fold it.
 Pills throughout the views show only the last path segment (`Work/Client`
 renders as `Client`), so nested tags stay readable — the underlying value
 is unchanged.
+
+**Grouping by `file.folder` is handled differently.** A folder path is
+still `/`-separated, but nesting it the same way as a tag would turn
+`Projects/Research/AI` into three collapsible levels for what is really
+one folder. Extended Base detects a folder grouping (by checking whether
+each group's key is an actual folder in the vault) and instead renders one
+flat level — just the folder that directly contains the files — as a bold
+plain-text label rather than a colored pill, in both the table and board
+views.
 
 ## The page panel
 
@@ -99,6 +118,9 @@ then opens the panel instead of a tab (Ctrl/Cmd-click still opens a tab):
 
 ## Features
 
+- **Theme-aware chrome** — text, borders, hover states, and the view's own
+  background all come from Obsidian's active theme, so Extended Base
+  matches whatever theme (not just light/dark mode) you have installed.
 - **Colored pills** — list properties (tags, multitext) render as pills
   using Notion's 9-color palette, with accurate light- and dark-mode
   values. Colors are assigned by a deterministic hash, so a value keeps
@@ -113,7 +135,9 @@ then opens the panel instead of a tab (Ctrl/Cmd-click still opens a tab):
 
 - **Select editor** — pill cells open a select-style menu listing every
   value already used for that property, with a checkmark on the selected
-  ones, search, and create-on-Enter.
+  ones, search, and create-on-Enter. Drag a row's grip handle to reorder
+  the option list — sorting a table column by that property (click its
+  header) follows the order you set instead of alphabetical.
 
   ![Tag selection](docs/asset/zoom.png)
 
@@ -122,9 +146,10 @@ then opens the panel instead of a tab (Ctrl/Cmd-click still opens a tab):
   saves, Shift+Enter adds a newline). Checkboxes toggle in place.
 - **Markdown in cells** — text and multitext values render as Markdown,
   so links and formatting work inside a cell.
-- **Path-stripped values** — values that look like paths display their
-  last segment, while URLs, wiki links, and comma-separated lists are
-  left alone.
+- **Path-stripped link values** — an internal link or file value that
+  looks like a path displays only its last segment (`Folder/Note` shows as
+  `Note`); ordinary text is left exactly as written, even if it happens to
+  contain a `/`.
 - **Grouping** — respects the Bases `group by` configuration, with the
   nesting and collapsing described above.
 
@@ -147,9 +172,9 @@ then opens the panel instead of a tab (Ctrl/Cmd-click still opens a tab):
 | Properties to show as colored pills | ✅ | ✅ | ✅ |
 | Pinned pill colors | ✅ | ✅ | ✅ |
 
-Column widths, renamed headers, per-column wrapping, and per-column color
-toggles are set directly on the table (drag / double-click / right-click)
-and persist in the view config.
+Column widths, order, sort, icons, renamed headers, per-column wrapping,
+and per-column color toggles are all set directly on the table (drag /
+click / double-click / right-click) and persist in the view config.
 
 Notes on editing:
 
