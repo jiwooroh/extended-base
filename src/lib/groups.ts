@@ -146,16 +146,25 @@ export function isGroupedByFolder(app: App, groups: BasesEntryGroup[]): boolean 
 /**
  * Drop the single absolute top-level folder from a folder-grouped tree —
  * its own files fall into the ungrouped ('') bucket and its children
- * become the new top-level groups — but only when there's exactly one
- * root to begin with. With several unrelated top-level folders (no shared
- * wrapper), each one's name is the only thing telling groups apart, so
- * this leaves them alone rather than guessing which one is "the" root.
+ * become the new top-level groups.
+ *
+ * Which folder counts as "the" absolute top-level one is decided from the
+ * vault's real folder tree (the vault root has exactly one subfolder),
+ * never from which groups merely happen to be roots in this filtered
+ * Base's results. A Base's filters can easily leave only one top-level
+ * *group* behind (e.g. everything else got filtered out) without that
+ * folder being the vault's actual sole top-level folder — unwrapping it
+ * anyway would wrongly promote its real subfolders (like "Short Answer
+ * Questions" under "UT Austin") to siblings and dump its own files into
+ * the ungrouped bucket, destroying the nesting.
  */
-export function hideSoleTopLevelFolder(roots: Map<string, GroupNode>): Map<string, GroupNode> {
-	const realRoots = [...roots.entries()].filter(([key]) => key !== '');
-	if (realRoots.length !== 1) return roots;
+export function hideSoleTopLevelFolder(app: App, roots: Map<string, GroupNode>): Map<string, GroupNode> {
+	const vaultTopFolders = app.vault.getRoot().children.filter((f): f is TFolder => f instanceof TFolder);
+	if (vaultTopFolders.length !== 1) return roots;
 
-	const [, top] = realRoots[0];
+	const top = roots.get(vaultTopFolders[0].path);
+	if (!top) return roots;
+
 	const result = new Map<string, GroupNode>();
 
 	const ungrouped = roots.get('');
@@ -169,6 +178,11 @@ export function hideSoleTopLevelFolder(roots: Map<string, GroupNode>): Map<strin
 	}
 	for (const [childKey, childNode] of top.children) {
 		result.set(childKey, childNode);
+	}
+	// Any other root (not the vault's sole top folder, not '') is left as-is.
+	for (const [key, node] of roots) {
+		if (key === '' || key === vaultTopFolders[0].path) continue;
+		result.set(key, node);
 	}
 
 	return result;

@@ -193,7 +193,7 @@ export class NotionTableView extends BasesView {
 
 		const folderGrouped = isGroupedByFolder(this.app, this.data.groupedData);
 		const roots = folderGrouped
-			? hideSoleTopLevelFolder(buildFolderGroups(this.data.groupedData))
+			? hideSoleTopLevelFolder(this.app, buildFolderGroups(this.data.groupedData))
 			: buildGroupTree(this.data.groupedData);
 		if (sortState) {
 			for (const rootNode of roots.values()) this.applySortToTree(rootNode, sortState);

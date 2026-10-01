@@ -100,7 +100,7 @@ export class NotionListView extends BasesView {
 
 		const folderGrouped = isGroupedByFolder(this.app, this.data.groupedData);
 		const roots = folderGrouped
-			? hideSoleTopLevelFolder(buildFolderGroups(this.data.groupedData))
+			? hideSoleTopLevelFolder(this.app, buildFolderGroups(this.data.groupedData))
 			: buildGroupTree(this.data.groupedData);
 
 		const renderNode = (node: GroupNode, depth: number) => {
