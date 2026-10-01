@@ -1,4 +1,5 @@
 import { App, BasesEntry, BasesEntryGroup, TFolder } from 'obsidian';
+import { LOG_PREFIX } from '../constants';
 
 export interface GroupNode {
 	key: string;
@@ -80,6 +81,10 @@ export function buildFolderGroups(groups: BasesEntryGroup[]): Map<string, GroupN
 		}
 		keyed.push({ path: group.key.toString(), entries: group.entries });
 	}
+
+	// TEMPORARY: diagnosing why some nested folder groups aren't nesting —
+	// remove once confirmed.
+	console.debug(`${LOG_PREFIX} folder group keys:`, keyed.map((k) => k.path));
 
 	// Shallowest paths first, so a parent's node exists by the time a
 	// deeper path goes looking for it.

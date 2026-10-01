@@ -1133,6 +1133,9 @@
 .ntn-list-container {
 	display: flex;
 	flex-direction: column;
+	/* Explicit zero: some themes set a default gap on flex containers,
+	   which would otherwise add space between every row and group-row. */
+	gap: 0;
 }
 
 .ntn-list-row {
