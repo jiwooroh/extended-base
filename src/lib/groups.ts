@@ -144,27 +144,28 @@ export function isGroupedByFolder(app: App, groups: BasesEntryGroup[]): boolean 
 }
 
 /**
- * Drop the single absolute top-level folder from a folder-grouped tree —
- * its own files fall into the ungrouped ('') bucket and its children
- * become the new top-level groups.
+ * Drop the single top-level folder group from a folder-grouped tree — its
+ * own files fall into the ungrouped ('') bucket and its children become
+ * the new top-level groups — but only when there's exactly one root to
+ * begin with. With several unrelated top-level groups, each one's name is
+ * the only thing telling them apart, so this leaves them alone rather than
+ * guessing which one is "the" root.
  *
- * Which folder counts as "the" absolute top-level one is decided from the
- * vault's real folder tree (the vault root has exactly one subfolder),
- * never from which groups merely happen to be roots in this filtered
- * Base's results. A Base's filters can easily leave only one top-level
- * *group* behind (e.g. everything else got filtered out) without that
- * folder being the vault's actual sole top-level folder — unwrapping it
- * anyway would wrongly promote its real subfolders (like "Short Answer
- * Questions" under "UT Austin") to siblings and dump its own files into
- * the ungrouped bucket, destroying the nesting.
+ * This asks "is there only one visible top-level group right now", not
+ * "is this folder the vault's literal root subfolder" — a Base's own
+ * filters routinely leave only one top-level group in view (an org folder
+ * like "Application" with no files of the vault root's own), and that's
+ * exactly the wrapper this is meant to hide. A real folder (e.g. "UT
+ * Austin") that happens to have its own nested subfolder (e.g. "Short
+ * Answer Questions") is unaffected either way: unwrapping only touches the
+ * single root's direct children, so a deeper nested relationship stays
+ * intact regardless of which folder gets unwrapped here.
  */
-export function hideSoleTopLevelFolder(app: App, roots: Map<string, GroupNode>): Map<string, GroupNode> {
-	const vaultTopFolders = app.vault.getRoot().children.filter((f): f is TFolder => f instanceof TFolder);
-	if (vaultTopFolders.length !== 1) return roots;
+export function hideSoleTopLevelFolder(roots: Map<string, GroupNode>): Map<string, GroupNode> {
+	const realRoots = [...roots.entries()].filter(([key]) => key !== '');
+	if (realRoots.length !== 1) return roots;
 
-	const top = roots.get(vaultTopFolders[0].path);
-	if (!top) return roots;
-
+	const [, top] = realRoots[0];
 	const result = new Map<string, GroupNode>();
 
 	const ungrouped = roots.get('');
@@ -178,11 +179,6 @@ export function hideSoleTopLevelFolder(app: App, roots: Map<string, GroupNode>):
 	}
 	for (const [childKey, childNode] of top.children) {
 		result.set(childKey, childNode);
-	}
-	// Any other root (not the vault's sole top folder, not '') is left as-is.
-	for (const [key, node] of roots) {
-		if (key === '' || key === vaultTopFolders[0].path) continue;
-		result.set(key, node);
 	}
 
 	return result;

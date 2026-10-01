@@ -374,15 +374,12 @@
    .ntn-th.ntn-th / .ntn-td.ntn-td elsewhere in this file. */
 .ntn-root .ntn-group-row.ntn-group-row td {
 	background: transparent;
-	/* Extra top padding gives each new group breathing room from the one
-	   above; the first group (nothing above it) doesn't need it. */
-	padding: 28px 8px 6px;
+	/* Same vertical padding as a normal .ntn-td, so a group header takes
+	   up exactly one row's worth of space — no added gap between one
+	   group's last entry and the next group's header. */
+	padding: 8px 8px;
 	padding-left: var(--ntn-indent, 8px);
 	border-bottom: 1px solid var(--ntn-border);
-}
-
-.ntn-root .ntn-group-row.ntn-group-row:first-child td {
-	padding-top: 6px;
 }
 
 .ntn-group-toggle {
