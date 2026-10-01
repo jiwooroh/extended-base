@@ -114,7 +114,11 @@ export class NotionListView extends BasesView {
 				// Inline style, not a CSS custom prop: some themes' broad
 				// div-padding resets have higher specificity than a var()
 				// read from a class selector, but nothing beats an inline style.
-				const headerIndent = folderGrouped ? 12 : (depth * 20) + 12;
+				// Folder groups get one flat "nested" step (not one per
+				// level) — enough to show a subfolder sits under a visible
+				// parent group, without stepping further for how deep it
+				// actually goes.
+				const headerIndent = folderGrouped ? (depth > 0 ? 32 : 12) : (depth * 20) + 12;
 				gRow.setCssStyles({ paddingLeft: `${headerIndent}px` });
 
 				// Add toggle icon
@@ -149,7 +153,7 @@ export class NotionListView extends BasesView {
 				if (node.key) {
 					// Indent entries slightly more than their group header
 					const leftEl = rowEl.querySelector<HTMLElement>('.ntn-list-left');
-					const entryIndent = folderGrouped ? 32 : (depth * 20) + 30;
+					const entryIndent = folderGrouped ? (depth > 0 ? 52 : 32) : (depth * 20) + 30;
 					leftEl?.setCssStyles({ paddingLeft: `${entryIndent}px` });
 				}
 				renderedCount++;

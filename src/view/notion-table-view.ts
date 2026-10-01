@@ -210,9 +210,11 @@ export class NotionTableView extends BasesView {
 				const gCell = gRow.createEl('td', { attr: { colspan: String(colCount) } });
 
 				// Indent by depth; the stylesheet reads this as padding-left.
-				// Folder groups skip the step-per-level: every folder header
-				// sits at the same indent regardless of nesting depth.
-				const headerIndent = folderGrouped ? 10 : (depth * 20) + 10;
+				// Folder groups get one flat "nested" step (not one per
+				// level) — enough to show a subfolder sits under a visible
+				// parent group, without stepping further for how deep it
+				// actually goes.
+				const headerIndent = folderGrouped ? (depth > 0 ? 30 : 10) : (depth * 20) + 10;
 				gCell.setCssProps({ '--ntn-indent': `${headerIndent}px` });
 				
 				const toggleIcon = gCell.createSpan({ cls: 'ntn-group-toggle' });
@@ -247,7 +249,7 @@ export class NotionTableView extends BasesView {
 					const firstVisibleCell = Array.from(tr.cells).find(
 						(c) => !c.hasClass('ntn-col-dummy'),
 					);
-					const entryIndent = folderGrouped ? 30 : (depth * 20) + 30;
+					const entryIndent = folderGrouped ? (depth > 0 ? 50 : 30) : (depth * 20) + 30;
 					firstVisibleCell?.setCssProps({ '--ntn-indent': `${entryIndent}px` });
 				}
 				renderedCount++;
