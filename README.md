@@ -5,7 +5,7 @@ Notion-style views for [Obsidian Bases](https://help.obsidian.md/bases) —
 inline cell editing, nested collapsible groups, and a Notion-style page
 panel for editing a note without leaving the view.
 
-By [Lucy Roh](https://github.com/lucytheboss).
+By [Lucy Roh](https://github.com/jiwooroh).
 
 ![Extended Base — Notion-style table view](docs/asset/intro.png)
 
