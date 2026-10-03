@@ -6,6 +6,7 @@ inline cell editing, nested collapsible groups, and a Notion-style page
 panel for editing a note without leaving the view.
 
 By [Lucy Roh](https://github.com/jiwooroh).
+If you like the plugin,[![BuyMeACoffee](https://raw.githubusercontent.com/pachadotdev/buymeacoffee-badges/main/bmc-yellow.svg)](https://buymeacoffee.com/jiwooroh)
 
 ![Extended Base — Notion-style table view](docs/asset/intro.png)
 
