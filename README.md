@@ -2,8 +2,9 @@
 
 Notion-style views for [Obsidian Bases](https://help.obsidian.md/bases) —
 **Table**, **List**, and **Board**. Clean chrome, colored value pills,
-inline cell editing, nested collapsible groups, and a Notion-style page
-panel for editing a note without leaving the view.
+inline cell editing, nested collapsible groups (with first-class support
+for grouping by folder), and a Notion-style page panel for editing a note
+without leaving the view.
 
 By [Lucy Roh](https://github.com/jiwooroh).
 If you like the plugin,[![BuyMeACoffee](https://raw.githubusercontent.com/pachadotdev/buymeacoffee-badges/main/bmc-yellow.svg)](https://buymeacoffee.com/jiwooroh)
@@ -20,14 +21,16 @@ If you like the plugin,[![BuyMeACoffee](https://raw.githubusercontent.com/pachad
 ## The three views
 
 Pick one from the base's view selector. All three share the same pill
-colors, select editor, inline editing, and page panel.
+colors, select editor, inline editing, folder/nested grouping, and page
+panel.
 
 ### Notion Table
 
 The full database grid.
 
-- **Sticky header** — column headers stay pinned at the top while you
-  scroll through a long list of rows.
+- **Sticky header** — the table scrolls in its own region (up to the full
+  height of the view) so the column headers can stay pinned to the top
+  while you scroll through a long list of rows.
 - **Resizable columns** — drag the border between two headers; widths are
   saved per view and aren't capped once you've resized past the default.
 - **Drag to reorder, click to sort** — press and drag a header to move
@@ -40,60 +43,95 @@ The full database grid.
 - **Property-type icons** — each header shows an icon matching the
   property's type (text, number, checkbox, date, tags), or whatever icon
   you've picked for it.
-- **Nested collapsible groups** — see [Nested groups](#nested-groups).
+- **Nested, collapsible groups** — including a dedicated, folder-aware
+  layout when grouping by `file.folder`. See [Nested & folder
+  groups](#nested--folder-groups).
 - **Row limit** — a subtle `Rows: 50 ▾` control in the footer caps how
   many rows render (10 / 20 / 50 / All).
+
+![Resizing, reordering, and the icon picker](docs/asset/column_controls.gif)
 
 ![Inline editing and the pill select menu in action](docs/asset/demo.gif)
 
 ### Notion List
 
 A compact one-line-per-note layout: the note title on the left, its
-properties on the right. Same grouping, pills, and inline editing as the
-table, minus the grid. The *Row count limit* view option decides how many
-rows to draw (`0` or `all` for no limit).
+properties on the right. Same grouping (including folder grouping),
+pills, and inline editing as the table, minus the grid. The *Row count
+limit* view option decides how many rows to draw (`0` or `all` for no
+limit).
 
 ### Notion Board
 
 A Kanban board built from the base's grouping: one column per group,
 one card per note.
 
-- Cards show the note title plus every visible property.
+- Cards show the note title (wrapping onto multiple lines if it's long,
+  rather than truncating or stretching the column) plus every visible
+  property.
+- **Column width** — a view option with three fixed presets (Small /
+  Medium / Large) for every column's width.
 - Notes with no group value collect under **No Status**.
 - Each column has its own **+ New** at the bottom.
 - Right-click a column header → **Hide group** to collapse it to a narrow
   strip at the right edge of the board, its name rotated vertically —
   click the strip to bring the column back. (Which groups are collapsed
   is stored in the *Hidden groups* view option.)
+- **Folder grouping** gets its own layout, consistent with the table and
+  list views — see the next section. Board columns stay one-per-top-level-
+  folder even when a vault's folders nest several levels deep; a
+  subfolder's notes show up as a collapsible labeled section *inside*
+  its parent's column instead of spawning a column of their own.
 
-Group keys containing `/` render as stacked, indented pills in the column
-header — so `Project/Alpha` shows both levels. Grouping by the built-in
-`file.folder` property is the one exception: since a folder path isn't
-really a tag, each column header instead shows just the immediate folder
-name as a bold plain-text label (see [Nested groups](#nested-groups)).
+Group keys containing `/` that *aren't* a folder (e.g. a tag like
+`Project/Alpha`) render as stacked, indented pills in the column header —
+so `Project/Alpha` shows both levels.
 
 > Cards are not drag-and-drop yet; change a note's group from the card's
 > own pill cell or the page panel.
 
-## Nested groups
+![A folder-grouped board, with a collapsed group strip](docs/asset/board_columns.png)
+
+## Nested & folder groups
 
 Group by a property whose values use `/` as a separator and Extended Base
 builds a real tree instead of a flat list. `Work/Client/Alpha` becomes
 three nested levels, each with its own collapsible header and a count of
 everything beneath it. Click **▼** / **▶** on any header to fold it.
-
 Pills throughout the views show only the last path segment (`Work/Client`
 renders as `Client`), so nested tags stay readable — the underlying value
 is unchanged.
 
-**Grouping by `file.folder` is handled differently.** A folder path is
-still `/`-separated, but nesting it the same way as a tag would turn
-`Projects/Research/AI` into three collapsible levels for what is really
-one folder. Extended Base detects a folder grouping (by checking whether
-each group's key is an actual folder in the vault) and instead renders one
-flat level — just the folder that directly contains the files — as a bold
-plain-text label rather than a colored pill, in both the table and board
-views.
+**Grouping by `file.folder` gets a dedicated layout**, since Bases
+produces one flat group per folder and a folder path isn't really a tag.
+Extended Base detects a folder grouping (by checking whether every
+group's key is an actual folder in the vault — there's no public API for
+reading which property a view is grouped by) and then:
+
+- Shows a bold plain-text label instead of a colored pill, with just the
+  name of the folder that directly contains those files.
+- **Nests subfolders under their real parent.** If `UT Austin` and
+  `UT Austin/Short Answer Questions` are both groups, the second nests
+  under the first, matching the vault's actual folder tree — a folder
+  that's only a pass-through (holds nothing of its own, just subfolders)
+  never becomes its own visible level. A group that's genuinely nested
+  gets one flat indent step in the table and list views (not one step per
+  level of depth) so a subfolder reads as nested without the tree
+  marching further right the deeper it goes.
+- **Hides a single top-level wrapper folder.** If grouping leaves exactly
+  one top-level folder in view (a vault or project often has one, e.g.
+  `Application`), its name is dropped and its own subfolders become the
+  visible top level directly — with several unrelated top-level folders,
+  nothing is hidden, since each name is the only thing telling them apart.
+- **In the board view**, since a Kanban board has no way to show
+  indentation, only the top-level folder becomes a column; any subfolder
+  nested inside it (however many levels deep) is flattened into that
+  column as its own labeled, collapsible section instead of a separate
+  column.
+
+![Folder grouping: nested, bold labels instead of pills](docs/asset/folder_group.png)
+
+![A subfolder as a collapsible section inside a board column](docs/asset/board_subfolder.png)
 
 ## The page panel
 
@@ -151,8 +189,10 @@ then opens the panel instead of a tab (Ctrl/Cmd-click still opens a tab):
   looks like a path displays only its last segment (`Folder/Note` shows as
   `Note`); ordinary text is left exactly as written, even if it happens to
   contain a `/`.
-- **Grouping** — respects the Bases `group by` configuration, with the
-  nesting and collapsing described above.
+- **Grouping** — follows Bases' own native **Group by** control (in the
+  base toolbar, not a plugin setting), with the nesting, folder handling,
+  and collapsing described in [Nested & folder
+  groups](#nested--folder-groups).
 
 ## Usage
 
@@ -167,8 +207,8 @@ then opens the panel instead of a tab (Ctrl/Cmd-click still opens a tab):
 | Wrap all content | ✅ | | |
 | Show vertical lines | ✅ | | |
 | Row count limit | ✅ (footer) | ✅ | |
+| Column width (Small/Medium/Large) | | | ✅ |
 | Open notes in | ✅ | ✅ | ✅ |
-| Group by property | | | ✅ |
 | Hidden groups | | | ✅ |
 | Properties to show as colored pills | ✅ | ✅ | ✅ |
 | Pinned pill colors | ✅ | ✅ | ✅ |
@@ -227,8 +267,8 @@ Source layout:
   `notion-board-view.ts` — one file per view.
 - `src/view/note-modal.ts` — the page panel; `select-editor.ts` — the pill
   select menu.
-- `src/lib/` — pill detection, the Notion color palette, group-tree
-  building, frontmatter and value helpers.
+- `src/lib/` — pill detection, the Notion color palette, group-tree and
+  folder-group building, frontmatter and value helpers.
 - `src/view-options.ts` — the per-view settings shown in the Bases toolbar.
 
 ## Roadmap
@@ -239,6 +279,11 @@ Source layout:
   collapsible tree with per-level counts.
 - ✅ **Column resizing and renaming** (1.0.1) — drag column borders,
   double-click a header to rename; both persist per view.
+- ✅ **Folder-aware grouping** — a dedicated layout for grouping by
+  `file.folder`: real parent/subfolder nesting, a flat indent step instead
+  of one per level, hiding a single top-level wrapper folder, and (in the
+  board view) nested subfolders as collapsible sections instead of their
+  own columns.
 - 🔵 **Drag-and-drop cards** — move a card between board columns to
   rewrite its group property.
 - 🔵 **Calculated footers** — a Notion-style per-column *Calculate* row
@@ -248,6 +293,31 @@ Source layout:
 - ⚪️ **Gallery view** — card galleries with cover images.
 
 ## Changelog
+
+### Unreleased
+
+- **Added:** board view **Column width** setting — three fixed presets
+  (Small / Medium / Large) instead of a single hardcoded width.
+- **Added:** folder grouping now nests a subfolder under its real parent
+  folder (e.g. `UT Austin/Short Answer Questions` nests under
+  `UT Austin`) instead of flattening every folder group to one level,
+  across all three views.
+- **Added:** a single top-level wrapper folder (e.g. an `Application`
+  folder with nothing of its own but subfolders) is hidden from the
+  group list — its subfolders become the visible top level directly.
+- **Added:** List view now gets the same folder-grouping treatment as the
+  table — bold plain-text labels, real nesting, and the top-folder-hiding
+  behavior above — instead of its previous colored-pill layout.
+- **Added:** board view folder grouping keeps one column per top-level
+  folder; a nested subfolder (any number of levels deep) now renders as a
+  collapsible labeled section *inside* its parent's column, with a ▼/▶
+  toggle and its own card count, instead of becoming its own column.
+- **Fixed:** a long card title in the board view could force its column
+  wider than its configured width; titles now wrap onto multiple lines
+  within the fixed column width instead.
+- **Fixed:** excess vertical spacing between consecutive groups in the
+  list view (and, separately, the table view's group-header row) — group
+  headers now take up about the same space as a normal row.
 
 ### 1.0.7
 
@@ -507,8 +577,8 @@ Also in this release:
 Extended Base is a fork of **[GoodBases](https://github.com/FrancescoUmberto/GoodBases)**
 by **Umberto Francesco Carolini**, released under the MIT license. The
 Notion-style table, colored pills, select editor, and page panel are their
-work; this fork adds the List and Board views, nested groups, and the
-column controls listed under [1.0.1](#101).
+work; this fork adds the List and Board views, nested and folder-aware
+groups, and the column controls listed under [1.0.1](#101).
 
 If GoodBases is useful to you, you can support the original author with a
 [coffee](https://buymeacoffee.com/umbertofrancesco) ☕.
