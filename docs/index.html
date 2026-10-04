@@ -142,15 +142,7 @@
 	<section id="demo">
 		<h2>Demo</h2>
 		<img class="shot" src="asset/demo.gif" alt="Scrolling through a long table">
-		<p class="caption">Inline editing and the select menu in action.</p>
-		<img class="shot" src="asset/panel_demo.gif" alt="Creating a note with + New and editing it in the Notion-style page panel">
-		<p class="caption">The page panel — <strong>+ New</strong> opens the note
-			in a centered panel with an editable title, editable properties, and
-			the body rendered as formatted Markdown.</p>
-		<img class="shot" src="asset/zoom.png" alt="The pill select editor: current values as removable pills, a search-or-create input, and every known value for the property">
-		<p class="caption">The pill select editor up close — current values as
-			removable pills, search or create on Enter, and every value already
-			used for the property, each with its own stable color.</p>
+		<p class="caption">Scrolling through a long table.</p>
 	</section>
 
 	<section id="changelog">
@@ -159,8 +151,45 @@
 
 			<details class="release" open>
 				<summary>
-					<span class="ver">1.0.7</span>
+					<span class="ver">1.0.8</span>
 					<span class="tag">Latest</span>
+				</summary>
+				<div class="body">
+					<ul>
+						<li>Added: board view <strong>Column width</strong> setting — three
+							fixed presets (Small / Medium / Large) instead of a single
+							hardcoded width.</li>
+						<li>Added: folder grouping now nests a subfolder under its real
+							parent folder (e.g. <code>UT Austin/Short Answer Questions</code>
+							nests under <code>UT Austin</code>) instead of flattening every
+							folder group to one level, across all three views.</li>
+						<li>Added: a single top-level wrapper folder (e.g. an
+							<code>Application</code> folder with nothing of its own but
+							subfolders) is hidden from the group list — its subfolders become
+							the visible top level directly.</li>
+						<li>Added: the List view now gets the same folder-grouping treatment
+							as the table — bold plain-text labels, real nesting, and the
+							top-folder-hiding behavior above — instead of its previous
+							colored-pill layout.</li>
+						<li>Added: board view folder grouping keeps one column per top-level
+							folder; a nested subfolder (any number of levels deep) now renders
+							as a collapsible labeled section <em>inside</em> its parent's
+							column, with a ▼/▶ toggle and its own card count, instead of
+							becoming its own column.</li>
+						<li>Fixed: a long card title in the board view could force its
+							column wider than its configured width; titles now wrap onto
+							multiple lines within the fixed column width instead.</li>
+						<li>Fixed: excess vertical spacing between consecutive groups in
+							the list view (and, separately, the table view's group-header
+							row) — group headers now take up about the same space as a
+							normal row.</li>
+					</ul>
+				</div>
+			</details>
+
+			<details class="release">
+				<summary>
+					<span class="ver">1.0.7</span>
 				</summary>
 				<div class="body">
 					<ul>
