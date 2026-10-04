@@ -49,6 +49,8 @@ export class NotionBoardView extends BasesView {
 	private pinnedColors: PinnedColors = new Map();
 	/** The open select editor, if any (also drives outside-click detection). */
 	private selectEditor: SelectEditor | null = null;
+	/** Set of subgroup full keys (nested folders within a column) that are currently collapsed. */
+	private collapsedSubgroups = new Set<string>();
 
 	constructor(controller: QueryController, parentEl: HTMLElement) {
 		super(controller);
@@ -191,11 +193,25 @@ export class NotionBoardView extends BasesView {
 			for (const entry of col.entries) {
 				this.renderCard(cardsWrap, entry, props);
 			}
-			// Deeper subfolders render as a labeled section inside this
-			// column rather than spawning their own column (see comment
-			// above `columns`).
+			// Deeper subfolders render as a labeled, collapsible section
+			// inside this column rather than spawning their own column (see
+			// comment above `columns`).
 			for (const sub of col.subgroups) {
-				cardsWrap.createDiv({ cls: 'ntn-board-subgroup-label', text: sub.key });
+				const isCollapsed = this.collapsedSubgroups.has(sub.fullKey);
+				const subLabel = cardsWrap.createDiv({ cls: 'ntn-board-subgroup-label' });
+				const toggleIcon = subLabel.createSpan({ cls: 'ntn-group-toggle' });
+				toggleIcon.setText(isCollapsed ? '▶' : '▼');
+				subLabel.createSpan({ text: sub.key });
+				subLabel.createSpan({ cls: 'ntn-group-count', text: String(sub.entries.length) });
+				subLabel.addEventListener('click', () => {
+					if (isCollapsed) {
+						this.collapsedSubgroups.delete(sub.fullKey);
+					} else {
+						this.collapsedSubgroups.add(sub.fullKey);
+					}
+					this.onDataUpdated();
+				});
+				if (isCollapsed) continue;
 				for (const entry of sub.entries) {
 					this.renderCard(cardsWrap, entry, props);
 				}
