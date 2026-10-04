@@ -49,7 +49,7 @@ The full database grid.
 - **Row limit** — a subtle `Rows: 50 ▾` control in the footer caps how
   many rows render (10 / 20 / 50 / All).
 
-![Resizing, reordering, and the icon picker](docs/asset/column_controls.gif)
+![Resizable, icon-labeled columns in the table view](docs/asset/column_controls.webp)
 
 ![Scrolling through a long table](docs/asset/demo.gif)
 
@@ -129,7 +129,7 @@ reading which property a view is grouped by) and then:
   column as its own labeled, collapsible section instead of a separate
   column.
 
-![Folder grouping: nested, bold labels instead of pills](docs/asset/folder_group.png)
+![Folder grouping: nested, bold labels instead of pills, in both the table and board views](docs/asset/folder_group.gif)
 
 ![A subfolder as a collapsible section inside a board column](docs/asset/board_subfolder.png)
 
@@ -170,7 +170,7 @@ then opens the panel instead of a tab (Ctrl/Cmd-click still opens a tab):
   that value appears. (You can also set colors in bulk with the *Pinned
   pill colors* view option — `value=color`, e.g. `Done=green`.)
 
-  ![Picking a pill color from the select menu](docs/asset/color_picker.gif)
+  ![Picking a pill color from the select menu](docs/asset/color_picker.png)
 
 - **Select editor** — pill cells open a select-style menu listing every
   value already used for that property, with a checkmark on the selected
