@@ -1197,7 +1197,7 @@
 }
 
 .ntn-board-column {
-	flex: 0 0 260px;
+	flex: 0 0 var(--ntn-board-col-width, 280px);
 	display: flex;
 	flex-direction: column;
 	gap: 8px;

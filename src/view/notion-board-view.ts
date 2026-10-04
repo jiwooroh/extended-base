@@ -21,7 +21,7 @@ import {
 import { LOG_PREFIX, NOTION_BOARD_VIEW } from '../constants';
 import { PinnedColors, applyPillColor, colorByName } from '../lib/colors';
 import { PillDetection, computePillProps, parsePinnedColors, stripPath } from '../lib/pills';
-import { isGroupedByFolder } from '../lib/groups';
+import { buildFolderGroups, GroupNode, hideSoleTopLevelFolder, isGroupedByFolder } from '../lib/groups';
 import { getPropertyMetaType } from '../lib/property-types';
 import { valueToStrings } from '../lib/values';
 import { NotePageModal, OpenSelectOpts } from './note-modal';
@@ -90,17 +90,48 @@ export class NotionBoardView extends BasesView {
 
 		const boardContainer = root.createDiv({ cls: 'ntn-board-container' });
 
+		const widthPx = { small: 220, medium: 280, large: 360 }[
+			this.config.get('boardColumnWidth') as string
+		] ?? 280;
+		boardContainer.setCssProps({ '--ntn-board-col-width': `${widthPx}px` });
+
 		let hiddenGroups = this.config.get('hiddenGroups') as string[];
 		if (!Array.isArray(hiddenGroups)) hiddenGroups = [];
 		const folderGrouped = isGroupedByFolder(this.app, this.data.groupedData);
 
-		for (const group of this.data.groupedData) {
-			const rawGroupKey = group.hasKey() && group.key ? group.key.toString() : 'No Status';
-			if (hiddenGroups.includes(rawGroupKey)) continue;
+		// One column per group. For folder grouping this walks the same
+		// nested tree table/list use (so the sole top-level wrapper folder
+		// is hidden the same way, and a subfolder's label is just its own
+		// name) flattened into a column list, since a Kanban board has no
+		// way to show indentation — nesting only matters here for which
+		// folder gets hidden and what each column is labeled.
+		const columns: { key: string; fullKey: string; entries: BasesEntry[] }[] = [];
+		if (folderGrouped) {
+			const roots = hideSoleTopLevelFolder(buildFolderGroups(this.data.groupedData));
+			const walk = (node: GroupNode) => {
+				columns.push({ key: node.key, fullKey: node.fullKey, entries: node.entries });
+				for (const child of node.children.values()) walk(child);
+			};
+			for (const node of roots.values()) {
+				if (node.key) {
+					walk(node);
+				} else if (node.entries.length) {
+					columns.push({ key: 'No Status', fullKey: 'No Status', entries: node.entries });
+				}
+			}
+		} else {
+			for (const group of this.data.groupedData) {
+				const rawGroupKey = group.hasKey() && group.key ? group.key.toString() : 'No Status';
+				columns.push({ key: rawGroupKey, fullKey: rawGroupKey, entries: group.entries });
+			}
+		}
+
+		for (const col of columns) {
+			if (hiddenGroups.includes(col.fullKey)) continue;
 
 			const colWrap = boardContainer.createDiv({ cls: 'ntn-board-column' });
 			const colHeader = colWrap.createDiv({ cls: 'ntn-board-column-header' });
-			
+
 			colHeader.addEventListener('contextmenu', (evt) => {
 				evt.preventDefault();
 				const menu = new Menu();
@@ -108,7 +139,7 @@ export class NotionBoardView extends BasesView {
 					item.setTitle('Hide group')
 						.setIcon('eye-off')
 						.onClick(() => {
-							const newHidden = [...hiddenGroups, rawGroupKey];
+							const newHidden = [...hiddenGroups, col.fullKey];
 							this.config.set('hiddenGroups', newHidden);
 						});
 				});
@@ -121,13 +152,9 @@ export class NotionBoardView extends BasesView {
 				// contains these files — not the pill-per-level stack below,
 				// and not the full vault-root-down path. A folder isn't a
 				// tag/value, so it doesn't get a colored chip.
-				const lastSlash = rawGroupKey.lastIndexOf('/');
-				const label = rawGroupKey === 'No Status'
-					? rawGroupKey
-					: (lastSlash === -1 ? rawGroupKey : rawGroupKey.slice(lastSlash + 1));
-				headerTitles.createSpan({ cls: 'ntn-group-folder-label', text: label });
+				headerTitles.createSpan({ cls: 'ntn-group-folder-label', text: col.key });
 			} else {
-				const parts = rawGroupKey === 'No Status' ? ['No Status'] : rawGroupKey.split('/');
+				const parts = col.fullKey === 'No Status' ? ['No Status'] : col.fullKey.split('/');
 				for (let i = 0; i < parts.length; i++) {
 					const part = parts[i];
 					const pill = headerTitles.createSpan({ cls: 'ntn-pill' });
@@ -141,14 +168,14 @@ export class NotionBoardView extends BasesView {
 					}
 				}
 			}
-			
-			colHeader.createSpan({ cls: 'ntn-group-count', text: String(group.entries.length) });
-			
+
+			colHeader.createSpan({ cls: 'ntn-group-count', text: String(col.entries.length) });
+
 			const cardsWrap = colWrap.createDiv({ cls: 'ntn-board-cards' });
-			for (const entry of group.entries) {
+			for (const entry of col.entries) {
 				this.renderCard(cardsWrap, entry, props);
 			}
-			
+
 			// A small "+ New" at the bottom of each column
 			const colNew = colWrap.createDiv({ cls: 'ntn-board-column-new' });
 			colNew.createSpan({ cls: 'ntn-new-plus', text: '+' });
@@ -160,23 +187,17 @@ export class NotionBoardView extends BasesView {
 		// their name still reads (rotated) and clicking one un-hides it. All
 		// of them render after every visible column, so they line up at the
 		// right edge of the board rather than sitting wherever they used to be.
-		for (const group of this.data.groupedData) {
-			const rawGroupKey = group.hasKey() && group.key ? group.key.toString() : 'No Status';
-			if (!hiddenGroups.includes(rawGroupKey)) continue;
-
-			const lastSlash = rawGroupKey.lastIndexOf('/');
-			const label = (folderGrouped && rawGroupKey !== 'No Status')
-				? (lastSlash === -1 ? rawGroupKey : rawGroupKey.slice(lastSlash + 1))
-				: rawGroupKey;
+		for (const col of columns) {
+			if (!hiddenGroups.includes(col.fullKey)) continue;
 
 			const collapsed = boardContainer.createDiv({
 				cls: 'ntn-board-column-collapsed',
-				attr: { 'aria-label': `Show "${label}"` },
+				attr: { 'aria-label': `Show "${col.key}"` },
 			});
-			collapsed.createSpan({ cls: 'ntn-board-collapsed-label', text: label });
-			collapsed.createSpan({ cls: 'ntn-group-count', text: String(group.entries.length) });
+			collapsed.createSpan({ cls: 'ntn-board-collapsed-label', text: col.key });
+			collapsed.createSpan({ cls: 'ntn-group-count', text: String(col.entries.length) });
 			collapsed.addEventListener('click', () => {
-				this.config.set('hiddenGroups', hiddenGroups.filter((k) => k !== rawGroupKey));
+				this.config.set('hiddenGroups', hiddenGroups.filter((k) => k !== col.fullKey));
 			});
 		}
 

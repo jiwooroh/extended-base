@@ -82,6 +82,17 @@ export function buildBoardViewOptions(_config: BasesViewConfig): BasesAllOptions
 		},
 		{
 			type: 'dropdown',
+			key: 'boardColumnWidth',
+			displayName: 'Column width',
+			default: 'medium',
+			options: {
+				small: 'Small',
+				medium: 'Medium',
+				large: 'Large',
+			},
+		},
+		{
+			type: 'dropdown',
 			key: 'openMode',
 			displayName: 'Open notes in',
 			default: 'tab',
