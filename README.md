@@ -282,7 +282,7 @@ Source layout:
 
 ## Changelog
 
-### Unreleased
+### 1.0.8
 
 - **Added:** board view **Column width** setting — three fixed presets
   (Small / Medium / Large) instead of a single hardcoded width.
