@@ -99,30 +99,44 @@ export class NotionBoardView extends BasesView {
 		if (!Array.isArray(hiddenGroups)) hiddenGroups = [];
 		const folderGrouped = isGroupedByFolder(this.app, this.data.groupedData);
 
-		// One column per group. For folder grouping this walks the same
-		// nested tree table/list use (so the sole top-level wrapper folder
-		// is hidden the same way, and a subfolder's label is just its own
-		// name) flattened into a column list, since a Kanban board has no
-		// way to show indentation — nesting only matters here for which
-		// folder gets hidden and what each column is labeled.
-		const columns: { key: string; fullKey: string; entries: BasesEntry[] }[] = [];
+		// One column per *top-level* group. For folder grouping this walks
+		// the same nested tree table/list use (so the sole top-level
+		// wrapper folder is hidden the same way), but — unlike table/list —
+		// a deeper subfolder does NOT get its own column: every descendant,
+		// however many levels down, is flattened into that top-level
+		// column's `subgroups` and rendered as a labeled card cluster
+		// inside it. A board with one column per nested subfolder doesn't
+		// read as a Kanban board any more; Notion's own folder-grouped
+		// board does the same — one column per top-level folder, deeper
+		// folders shown as sections within it.
+		type BoardSubgroup = { key: string; fullKey: string; entries: BasesEntry[] };
+		const columns: { key: string; fullKey: string; entries: BasesEntry[]; subgroups: BoardSubgroup[] }[] = [];
 		if (folderGrouped) {
 			const roots = hideSoleTopLevelFolder(buildFolderGroups(this.data.groupedData));
-			const walk = (node: GroupNode) => {
-				columns.push({ key: node.key, fullKey: node.fullKey, entries: node.entries });
-				for (const child of node.children.values()) walk(child);
+			const flattenDescendants = (node: GroupNode): BoardSubgroup[] => {
+				const result: BoardSubgroup[] = [];
+				for (const child of node.children.values()) {
+					result.push({ key: child.key, fullKey: child.fullKey, entries: child.entries });
+					result.push(...flattenDescendants(child));
+				}
+				return result;
 			};
 			for (const node of roots.values()) {
 				if (node.key) {
-					walk(node);
+					columns.push({
+						key: node.key,
+						fullKey: node.fullKey,
+						entries: node.entries,
+						subgroups: flattenDescendants(node),
+					});
 				} else if (node.entries.length) {
-					columns.push({ key: 'No Status', fullKey: 'No Status', entries: node.entries });
+					columns.push({ key: 'No Status', fullKey: 'No Status', entries: node.entries, subgroups: [] });
 				}
 			}
 		} else {
 			for (const group of this.data.groupedData) {
 				const rawGroupKey = group.hasKey() && group.key ? group.key.toString() : 'No Status';
-				columns.push({ key: rawGroupKey, fullKey: rawGroupKey, entries: group.entries });
+				columns.push({ key: rawGroupKey, fullKey: rawGroupKey, entries: group.entries, subgroups: [] });
 			}
 		}
 
@@ -169,11 +183,22 @@ export class NotionBoardView extends BasesView {
 				}
 			}
 
-			colHeader.createSpan({ cls: 'ntn-group-count', text: String(col.entries.length) });
+			const totalCount = col.entries.length
+				+ col.subgroups.reduce((sum, sg) => sum + sg.entries.length, 0);
+			colHeader.createSpan({ cls: 'ntn-group-count', text: String(totalCount) });
 
 			const cardsWrap = colWrap.createDiv({ cls: 'ntn-board-cards' });
 			for (const entry of col.entries) {
 				this.renderCard(cardsWrap, entry, props);
+			}
+			// Deeper subfolders render as a labeled section inside this
+			// column rather than spawning their own column (see comment
+			// above `columns`).
+			for (const sub of col.subgroups) {
+				cardsWrap.createDiv({ cls: 'ntn-board-subgroup-label', text: sub.key });
+				for (const entry of sub.entries) {
+					this.renderCard(cardsWrap, entry, props);
+				}
 			}
 
 			// A small "+ New" at the bottom of each column
