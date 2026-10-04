@@ -9,7 +9,7 @@ without leaving the view.
 By [Lucy Roh](https://github.com/jiwooroh).
 If you like the plugin,[![BuyMeACoffee](https://raw.githubusercontent.com/pachadotdev/buymeacoffee-badges/main/bmc-yellow.svg)](https://buymeacoffee.com/jiwooroh)
 
-![Extended Base — Notion-style table view](docs/asset/intro.png)
+![Extended Base — Notion-style table view](docs/asset/intro.webp)
 
 > Requires Obsidian **1.10.2+** with the **Bases** core plugin enabled.
 
@@ -51,7 +51,7 @@ The full database grid.
 
 ![Resizing, reordering, and the icon picker](docs/asset/column_controls.gif)
 
-![Inline editing and the pill select menu in action](docs/asset/demo.gif)
+![Scrolling through a long table](docs/asset/demo.gif)
 
 ### Notion List
 
