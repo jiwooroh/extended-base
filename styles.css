@@ -1198,6 +1198,11 @@
 
 .ntn-board-column {
 	flex: 0 0 var(--ntn-board-col-width, 280px);
+	/* Flex items default to min-width: auto, which lets unbreakable
+	   content (a long nowrap title, deep inside) grow the column past
+	   its fixed basis instead of respecting it — this is what actually
+	   enforces the fixed width. */
+	min-width: 0;
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
@@ -1240,6 +1245,18 @@
 .ntn-board-card-title {
 	font-weight: 500;
 	font-size: 14px;
+}
+
+/* .ntn-title-text (shared with table/list) truncates to one line with an
+   ellipsis — right for a table cell, but a board card has room, and
+   Notion's own board wraps long titles onto multiple lines instead of
+   hiding them. */
+.ntn-board-card-title .ntn-title-text {
+	white-space: normal;
+	overflow: visible;
+	text-overflow: clip;
+	overflow-wrap: break-word;
+	word-break: break-word;
 }
 
 .ntn-board-card-props {
