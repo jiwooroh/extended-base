@@ -89,8 +89,6 @@ so `Project/Alpha` shows both levels.
 > Cards are not drag-and-drop yet; change a note's group from the card's
 > own pill cell or the page panel.
 
-![A folder-grouped board, with a collapsed group strip](docs/asset/board_columns.png)
-
 ## Nested & folder groups
 
 Group by a property whose values use `/` as a separator and Extended Base
@@ -130,8 +128,6 @@ reading which property a view is grouped by) and then:
 
 ![Folder grouping: nested, bold labels instead of pills, in both the table and board views](docs/asset/folder_group.gif)
 
-![A subfolder as a collapsible section inside a board column](docs/asset/board_subfolder.png)
-
 ## The page panel
 
 Click **+ New** (in the footer, in a board column, or the base toolbar's
@@ -139,8 +135,6 @@ Click **+ New** (in the footer, in a board column, or the base toolbar's
 panel, without leaving the view. To open *existing* notes there too, set
 the **Open notes in** view option to *Page panel* — clicking a note title
 then opens the panel instead of a tab (Ctrl/Cmd-click still opens a tab):
-
-![The Notion-style page panel](docs/asset/panel.png)
 
 - **Title** — a real heading; type to rename the note, Enter jumps to the
   body.
@@ -151,8 +145,6 @@ then opens the panel instead of a tab (Ctrl/Cmd-click still opens a tab):
   click away and it renders again. Changes save automatically as you type.
 - An **open-in-new-tab** button next to the close button saves pending
   edits and opens the note in a tab.
-
-![Creating and editing a note in the page panel](docs/asset/panel_demo.gif)
 
 ## Features
 
@@ -176,9 +168,6 @@ then opens the panel instead of a tab (Ctrl/Cmd-click still opens a tab):
   ones, search, and create-on-Enter. Drag a row's grip handle to reorder
   the option list — sorting a table column by that property (click its
   header) follows the order you set instead of alphabetical.
-
-  ![Tag selection](docs/asset/zoom.png)
-
 - **Inline editing** — click a cell to edit text and numbers in a
   floating input sized to the cell; long text opens a textarea (Enter
   saves, Shift+Enter adds a newline). Checkboxes toggle in place.
