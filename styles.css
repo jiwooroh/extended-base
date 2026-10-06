@@ -1348,23 +1348,22 @@
 	gap: 8px;
 }
 
-/* A hidden group collapses to this narrow strip instead of disappearing —
-   click it to un-hide. min/max-width (not just width) and overflow:hidden
-   keep it pinned to a fixed width regardless of label length — a flex
-   item's default min-width: auto would otherwise let a long label's
-   content grow it wider than a short one's. */
+/* A hidden group collapses to this short horizontal bar instead of
+   disappearing — click it to un-hide. A fixed width (min/max, not just
+   width — a flex item's default min-width: auto would otherwise let a
+   long label grow it wider than a short one's) keeps every strip the
+   same size regardless of label length; the label itself truncates with
+   an ellipsis rather than wrapping or forcing the bar wider. */
 .ntn-board-column-collapsed {
 	flex: 0 0 auto;
-	width: 36px;
-	min-width: 36px;
-	max-width: 36px;
-	overflow: hidden;
+	width: 160px;
+	min-width: 160px;
+	max-width: 160px;
 	display: flex;
-	flex-direction: column;
 	align-items: center;
-	justify-content: flex-start;
+	justify-content: space-between;
 	gap: 8px;
-	padding: 12px 0;
+	padding: 6px 10px;
 	border: 1px solid var(--ntn-border);
 	border-radius: 6px;
 	cursor: pointer;
@@ -1376,9 +1375,10 @@
 }
 
 .ntn-board-collapsed-label {
-	writing-mode: vertical-rl;
-	transform: rotate(180deg);
+	overflow: hidden;
+	text-overflow: ellipsis;
 	white-space: nowrap;
+	min-width: 0;
 	font-weight: 600;
 	font-size: 14px;
 	color: var(--ntn-text);
