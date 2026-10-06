@@ -51,70 +51,52 @@ export function buildGroupTree(groups: BasesEntryGroup[]): Map<string, GroupNode
 }
 
 /**
- * Folder-aware grouping for file.folder: nests a group under the nearest
- * *existing* ancestor group, not under every intermediate path segment the
- * way buildGroupTree does. Each node is still labeled with just the folder
- * that directly contains its own files, not the full vault-root-down path.
+ * Folder-aware grouping for file.folder: nests a group under every real
+ * ancestor folder along its path, mirroring the vault's actual folder
+ * tree exactly. Each node is still labeled with just the folder that
+ * directly contains its own files, not the full vault-root-down path.
  *
  * Bases only produces a group for a folder that actually holds files
  * directly — an intermediate folder that's just a pass-through (nothing
- * of its own, only subfolders) never becomes a group at all. So
- * "Masters/Application/Georgia Tech MS-HCI" with nothing directly in
- * Masters or Masters/Application has no ancestor to nest under and
- * renders as a root-level "Georgia Tech MS-HCI". But "UT Austin" (has its
- * own files) and "UT Austin/Short Answer Questions" (a real subfolder,
- * also with its own files) are both real groups, so the second nests
- * under the first — exactly mirroring the vault's actual folder tree,
- * rather than flattening every folder group to one level regardless of
- * whether it's really nested inside another one that's also showing.
+ * of its own, only subfolders) never becomes a group on its own. Rather
+ * than skip it and promote its children past it, this synthesizes an
+ * empty node for it (0 of its own entries) so it still shows as its own
+ * label with its real children nested inside — e.g. "Application" with
+ * nothing of its own but "UT Austin"/"Georgia Tech MS-HCI"/etc. as real
+ * subfolders still gets its own heading, rather than disappearing and
+ * promoting those subfolders to look like unrelated top-level groups.
  */
 export function buildFolderGroups(groups: BasesEntryGroup[]): Map<string, GroupNode> {
 	const roots = new Map<string, GroupNode>();
 	const nodesByPath = new Map<string, GroupNode>();
-	const keyed: { path: string; entries: BasesEntry[] }[] = [];
+
+	const ensureNode = (path: string): GroupNode => {
+		const existing = nodesByPath.get(path);
+		if (existing) return existing;
+
+		const lastSlash = path.lastIndexOf('/');
+		const node: GroupNode = {
+			key: lastSlash === -1 ? path : path.slice(lastSlash + 1),
+			fullKey: path,
+			entries: [],
+			children: new Map(),
+		};
+		nodesByPath.set(path, node);
+
+		if (lastSlash === -1) {
+			roots.set(path, node);
+		} else {
+			ensureNode(path.slice(0, lastSlash)).children.set(path, node);
+		}
+		return node;
+	};
 
 	for (const group of groups) {
 		if (!group.hasKey() || !group.key) {
 			roots.set('', { key: '', fullKey: '', entries: [...group.entries], children: new Map() });
 			continue;
 		}
-		keyed.push({ path: group.key.toString(), entries: group.entries });
-	}
-
-	// Shallowest paths first, so a parent's node exists by the time a
-	// deeper path goes looking for it.
-	keyed.sort((a, b) => a.path.split('/').length - b.path.split('/').length);
-
-	for (const { path, entries } of keyed) {
-		const lastSlash = path.lastIndexOf('/');
-		const displayKey = lastSlash === -1 ? path : path.slice(lastSlash + 1);
-		const node: GroupNode = {
-			key: displayKey || path,
-			fullKey: path,
-			entries: [...entries],
-			children: new Map(),
-		};
-		nodesByPath.set(path, node);
-
-		// Walk up the path looking for the nearest ancestor that's an
-		// actual group, skipping any intermediate segment that isn't one.
-		let parent: GroupNode | undefined;
-		let probe = lastSlash;
-		while (probe !== -1) {
-			const candidate = path.slice(0, probe);
-			const found = nodesByPath.get(candidate);
-			if (found) {
-				parent = found;
-				break;
-			}
-			probe = candidate.lastIndexOf('/');
-		}
-
-		if (parent) {
-			parent.children.set(path, node);
-		} else {
-			roots.set(path, node);
-		}
+		ensureNode(group.key.toString()).entries.push(...group.entries);
 	}
 
 	return roots;
