@@ -126,44 +126,53 @@ export function isGroupedByFolder(app: App, groups: BasesEntryGroup[]): boolean 
 }
 
 /**
- * Drop the single top-level folder group from a folder-grouped tree — its
- * own files fall into the ungrouped ('') bucket and its children become
- * the new top-level groups — but only when there's exactly one root to
- * begin with. With several unrelated top-level groups, each one's name is
- * the only thing telling them apart, so this leaves them alone rather than
- * guessing which one is "the" root.
+ * Drop every top-level wrapper folder from a folder-grouped tree, as long
+ * as there's exactly one root to unwrap — its own files fall into the
+ * ungrouped ('') bucket and its children become the new top-level groups,
+ * repeated for as long as that leaves a single root behind. With several
+ * unrelated top-level groups, each one's name is the only thing telling
+ * them apart, so this leaves them alone rather than guessing which one is
+ * "the" root.
  *
  * This asks "is there only one visible top-level group right now", not
  * "is this folder the vault's literal root subfolder" — a Base's own
- * filters routinely leave only one top-level group in view (an org folder
- * like "Application" with no files of the vault root's own), and that's
- * exactly the wrapper this is meant to hide. A real folder (e.g. "UT
- * Austin") that happens to have its own nested subfolder (e.g. "Short
- * Answer Questions") is unaffected either way: unwrapping only touches the
- * single root's direct children, so a deeper nested relationship stays
- * intact regardless of which folder gets unwrapped here.
+ * filters routinely leave a whole chain of single-child wrapper folders
+ * in view (e.g. "Masters" containing only "Application", itself holding
+ * nothing of its own but the real project folders) — buildFolderGroups
+ * now synthesizes a node for each of them, so without unwrapping the
+ * whole chain, "Application" would resurface as its own empty top-level
+ * heading the moment "Masters" was unwrapped. Repeating the unwrap until
+ * more than one root (or none) is left peels off the entire wrapper
+ * chain in one pass. A real folder (e.g. "UT Austin") that happens to
+ * have its own nested subfolder (e.g. "Short Answer Questions") is
+ * unaffected either way: unwrapping only touches a root's direct
+ * children, so a deeper nested relationship stays intact regardless of
+ * which folders get unwrapped here.
  */
 export function hideSoleTopLevelFolder(roots: Map<string, GroupNode>): Map<string, GroupNode> {
-	const realRoots = [...roots.entries()].filter(([key]) => key !== '');
-	if (realRoots.length !== 1) return roots;
+	let current = roots;
+	for (;;) {
+		const realRoots = [...current.entries()].filter(([key]) => key !== '');
+		if (realRoots.length !== 1) return current;
 
-	const [, top] = realRoots[0];
-	const result = new Map<string, GroupNode>();
+		const [, top] = realRoots[0];
+		const result = new Map<string, GroupNode>();
 
-	const ungrouped = roots.get('');
-	if (top.entries.length || ungrouped) {
-		result.set('', {
-			key: '',
-			fullKey: '',
-			entries: [...(ungrouped?.entries ?? []), ...top.entries],
-			children: new Map(),
-		});
+		const ungrouped = current.get('');
+		if (top.entries.length || ungrouped) {
+			result.set('', {
+				key: '',
+				fullKey: '',
+				entries: [...(ungrouped?.entries ?? []), ...top.entries],
+				children: new Map(),
+			});
+		}
+		for (const [childKey, childNode] of top.children) {
+			result.set(childKey, childNode);
+		}
+
+		current = result;
 	}
-	for (const [childKey, childNode] of top.children) {
-		result.set(childKey, childNode);
-	}
-
-	return result;
 }
 
 export function countEntries(node: GroupNode): number {
