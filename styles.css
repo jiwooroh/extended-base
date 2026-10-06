@@ -1205,7 +1205,7 @@
 }
 
 .ntn-board-column {
-	flex: 0 0 var(--ntn-board-col-width, 280px);
+	flex: 0 0 var(--ntn-board-col-width, 240px);
 	/* Flex items default to min-width: auto, which lets unbreakable
 	   content (a long nowrap title, deep inside) grow the column past
 	   its fixed basis instead of respecting it — this is what actually

@@ -149,9 +149,9 @@ export class NotionBoardView extends BasesView {
 
 		const boardContainer = root.createDiv({ cls: 'ntn-board-container' });
 
-		const widthPx = { small: 220, medium: 280, large: 360 }[
+		const widthPx = { small: 200, medium: 240, large: 320 }[
 			this.config.get('boardColumnWidth') as string
-		] ?? 280;
+		] ?? 240;
 		boardContainer.setCssProps({ '--ntn-board-col-width': `${widthPx}px` });
 
 		let hiddenGroups = this.config.get('hiddenGroups') as string[];
