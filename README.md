@@ -72,10 +72,14 @@ one card per note.
   Medium / Large) for every column's width.
 - Notes with no group value collect under **No Status**.
 - Each column has its own **+ New** at the bottom.
-- Right-click a column header → **Hide group** to collapse it to a narrow
-  strip at the right edge of the board, its name rotated vertically —
-  click the strip to bring the column back. (Which groups are collapsed
-  is stored in the *Hidden groups* view option.)
+- Right-click a column header for **Set color** (the same Notion-palette
+  picker the pill select editor uses — pins a color for that group) and
+  **Hide group**, which collapses the column to a short pill-shaped strip
+  at the right edge of the board instead of dropping it — click the strip
+  to bring the column back. (Which groups are collapsed is stored in the
+  *Hidden groups* view option.) The **Show group color as** view option
+  controls whether a group's color shows as its heading's pill, a faint
+  wash across the whole column, both, or neither.
 - **Folder grouping** gets its own layout, consistent with the table and
   list views — see the next section. Board columns stay one-per-top-level-
   folder even when a vault's folders nest several levels deep; a
@@ -105,21 +109,28 @@ Extended Base detects a folder grouping (by checking whether every
 group's key is an actual folder in the vault — there's no public API for
 reading which property a view is grouped by) and then:
 
-- Shows a bold plain-text label instead of a colored pill, with just the
-  name of the folder that directly contains those files.
-- **Nests subfolders under their real parent.** If `UT Austin` and
-  `UT Austin/Short Answer Questions` are both groups, the second nests
-  under the first, matching the vault's actual folder tree — a folder
-  that's only a pass-through (holds nothing of its own, just subfolders)
-  never becomes its own visible level. A group that's genuinely nested
-  gets one flat indent step in the table and list views (not one step per
-  level of depth) so a subfolder reads as nested without the tree
-  marching further right the deeper it goes.
-- **Hides a single top-level wrapper folder.** If grouping leaves exactly
-  one top-level folder in view (a vault or project often has one, e.g.
-  `Application`), its name is dropped and its own subfolders become the
-  visible top level directly — with several unrelated top-level folders,
-  nothing is hidden, since each name is the only thing telling them apart.
+- Shows a bold plain-text label instead of a colored pill (or, with the
+  *Show group color as* board option, a colored pill of its own), with
+  just the name of the folder that directly contains those files.
+- **Nests subfolders under their real parent**, matching the vault's
+  actual folder tree exactly. If `UT Austin` and `UT Austin/Short Answer
+  Questions` are both groups, the second nests under the first; a folder
+  that's only a pass-through (holds nothing of its own, just subfolders —
+  e.g. `Application` in `Masters/Application/UT Austin`) still gets its
+  own (empty) heading, with its real subfolders nested inside it, rather
+  than disappearing and leaving those subfolders looking like unrelated
+  top-level groups. A group that's genuinely nested gets one flat indent
+  step in the table and list views (not one step per level of depth) so a
+  subfolder reads as nested without the tree marching further right the
+  deeper it goes.
+- **Hides a chain of top-level wrapper folders.** If grouping leaves
+  exactly one top-level folder in view (a vault or project often has one,
+  e.g. `Masters`, holding only `Application`, itself holding nothing but
+  the real project folders), its name — and that of every single-child
+  folder below it — is dropped, so the real project folders become the
+  visible top level directly. With several unrelated top-level folders at
+  any point in that chain, nothing further is hidden, since each name is
+  the only thing telling them apart from there down.
 - **In the board view**, since a Kanban board has no way to show
   indentation, only the top-level folder becomes a column; any subfolder
   nested inside it (however many levels deep) is flattened into that
@@ -196,6 +207,7 @@ then opens the panel instead of a tab (Ctrl/Cmd-click still opens a tab):
 | Show vertical lines | ✅ | | |
 | Row count limit | ✅ (footer) | ✅ | |
 | Column width (Small/Medium/Large) | | | ✅ |
+| Show group color as (Off/Label/Background/Both) | | | ✅ |
 | Open notes in | ✅ | ✅ | ✅ |
 | Hidden groups | | | ✅ |
 | Properties to show as colored pills | ✅ | ✅ | ✅ |
@@ -281,6 +293,38 @@ Source layout:
 - ⚪️ **Gallery view** — card galleries with cover images.
 
 ## Changelog
+
+### 1.0.9
+
+- **Added:** board view **Show group color as** setting (Off / Label
+  only / Background only / Both) — colors a folder-grouped column's
+  heading like a pill and/or tints the whole column with a faint wash of
+  the group's color. Off by default, so existing boards look unchanged.
+- **Added:** right-click a board column header → **Set color** opens the
+  same Notion-palette color picker the pill select editor uses, letting
+  you pin a color for that group directly from the board.
+- **Changed:** the Notion color palette now uses the exact light/dark
+  background and text values from Notion's own published color
+  reference, in place of the previous approximated set — this changes
+  the precise shade of every pill across all three views.
+- **Changed:** a hidden board group's collapsed strip is now colored
+  like a pill (matching the group's assigned color) instead of a plain
+  bordered box, and the strips stack vertically in one narrow rail at
+  the right edge of the board — reading normally left to right — instead
+  of each being a separate full-height, rotated-text column.
+- **Changed:** folder grouping now shows a pass-through folder (one that
+  holds no files of its own, only subfolders — e.g. `Application` inside
+  `Masters/Application`) as its own (empty) label with its real
+  subfolders nested inside, rather than skipping it and promoting those
+  subfolders to look like unrelated top-level groups. Hiding the
+  top-level wrapper folder now also unwraps a whole chain of such
+  single-child wrapper folders (e.g. both `Masters` and `Application`),
+  not just the outermost one.
+- **Changed:** board view's column width presets are a bit narrower
+  (Small/Medium/Large: 220/280/360px → 200/240/320px).
+- **Fixed:** a long pill label in a board column header (a folder name or
+  a deeply nested tag) could push the header past the column's fixed
+  width instead of truncating with an ellipsis.
 
 ### 1.0.8
 

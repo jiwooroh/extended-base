@@ -151,8 +151,55 @@
 
 			<details class="release" open>
 				<summary>
-					<span class="ver">1.0.8</span>
+					<span class="ver">1.0.9</span>
 					<span class="tag">Latest</span>
+				</summary>
+				<div class="body">
+					<ul>
+						<li>Added: board view <strong>Show group color as</strong>
+							setting (Off / Label only / Background only / Both) — colors a
+							folder-grouped column's heading like a pill and/or tints the
+							whole column with a faint wash of the group's color. Off by
+							default, so existing boards look unchanged.</li>
+						<li>Added: right-click a board column header →
+							<strong>Set color</strong> opens the same Notion-palette color
+							picker the pill select editor uses, letting you pin a color for
+							that group directly from the board.</li>
+						<li>Changed: the Notion color palette now uses the exact
+							light/dark background and text values from Notion's own
+							published color reference, in place of the previous
+							approximated set — this changes the precise shade of every pill
+							across all three views.</li>
+						<li>Changed: a hidden board group's collapsed strip is now
+							colored like a pill (matching the group's assigned color)
+							instead of a plain bordered box, and the strips stack
+							vertically in one narrow rail at the right edge of the board —
+							reading normally left to right — instead of each being a
+							separate full-height, rotated-text column.</li>
+						<li>Changed: folder grouping now shows a pass-through folder
+							(one that holds no files of its own, only subfolders — e.g.
+							<code>Application</code> inside
+							<code>Masters/Application</code>) as its own (empty) label
+							with its real subfolders nested inside, rather than skipping it
+							and promoting those subfolders to look like unrelated
+							top-level groups. Hiding the top-level wrapper folder now also
+							unwraps a whole chain of such single-child wrapper folders
+							(e.g. both <code>Masters</code> and <code>Application</code>),
+							not just the outermost one.</li>
+						<li>Changed: board view's column width presets are a bit
+							narrower (Small/Medium/Large: 220/280/360px →
+							200/240/320px).</li>
+						<li>Fixed: a long pill label in a board column header (a folder
+							name or a deeply nested tag) could push the header past the
+							column's fixed width instead of truncating with an
+							ellipsis.</li>
+					</ul>
+				</div>
+			</details>
+
+			<details class="release">
+				<summary>
+					<span class="ver">1.0.8</span>
 				</summary>
 				<div class="body">
 					<ul>
