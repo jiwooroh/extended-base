@@ -93,6 +93,18 @@ export function buildBoardViewOptions(_config: BasesViewConfig): BasesAllOptions
 		},
 		{
 			type: 'dropdown',
+			key: 'groupColorDisplay',
+			displayName: 'Show group color as',
+			default: 'off',
+			options: {
+				off: 'Off',
+				label: 'Label only',
+				background: 'Background only',
+				both: 'Both',
+			},
+		},
+		{
+			type: 'dropdown',
 			key: 'openMode',
 			displayName: 'Open notes in',
 			default: 'tab',

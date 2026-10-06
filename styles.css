@@ -415,6 +415,14 @@
 	color: var(--ntn-text);
 }
 
+/* Board-only: when "Show group color as" includes a label, a folder
+   column's heading renders as a colored pill (bold, to still read as a
+   heading) instead of the plain label above. */
+.ntn-group-folder-pill {
+	font-weight: 700;
+	font-size: 14px;
+}
+
 /* ---------------- "+ New" footer ---------------- */
 
 .ntn-new-row {
@@ -1208,6 +1216,20 @@
 	gap: 8px;
 }
 
+/* "Show group color as: Background" / "Both" — a faint panel behind the
+   whole column, colored like the group's pill. --ntn-board-tint-* is set
+   per-column from the same resolvePillColor used for pills, so a pinned
+   color applies here too. */
+.ntn-board-column-tinted {
+	background: var(--ntn-board-tint-light);
+	border-radius: 8px;
+	padding: 8px;
+}
+
+.theme-dark .ntn-board-column-tinted {
+	background: var(--ntn-board-tint-dark);
+}
+
 .ntn-board-column-header {
 	display: flex;
 	align-items: flex-start;
@@ -1316,13 +1338,27 @@
 	background: var(--ntn-hover);
 }
 
+/* All hidden groups stack vertically in one narrow rail at the right edge
+   of the board, instead of each being its own separate full-height,
+   flex-basis-ignoring column. */
+.ntn-board-hidden-rail {
+	flex: 0 0 auto;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
 /* A hidden group collapses to this narrow strip instead of disappearing —
-   click it to un-hide. Rendered after every visible column, so hidden
-   groups line up together at the right edge of the board. */
+   click it to un-hide. min/max-width (not just width) and overflow:hidden
+   keep it pinned to a fixed width regardless of label length — a flex
+   item's default min-width: auto would otherwise let a long label's
+   content grow it wider than a short one's. */
 .ntn-board-column-collapsed {
-	flex: 0 0 36px;
+	flex: 0 0 auto;
 	width: 36px;
-	align-self: stretch;
+	min-width: 36px;
+	max-width: 36px;
+	overflow: hidden;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
