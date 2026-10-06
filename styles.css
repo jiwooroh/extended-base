@@ -1223,13 +1223,13 @@
    background rather than using the pill's bg color at full strength —
    a tint this size needs to read as pale, not as another pill. */
 .ntn-board-column-tinted {
-	background: color-mix(in srgb, var(--ntn-board-tint-light) 30%, var(--background-primary));
+	background: color-mix(in srgb, var(--ntn-board-tint-light) 42%, var(--background-primary));
 	border-radius: 8px;
 	padding: 8px;
 }
 
 .theme-dark .ntn-board-column-tinted {
-	background: color-mix(in srgb, var(--ntn-board-tint-dark) 30%, var(--background-primary));
+	background: color-mix(in srgb, var(--ntn-board-tint-dark) 42%, var(--background-primary));
 }
 
 .ntn-board-column-header {
