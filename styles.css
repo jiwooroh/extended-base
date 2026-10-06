@@ -1219,15 +1219,17 @@
 /* "Show group color as: Background" / "Both" — a faint panel behind the
    whole column, colored like the group's pill. --ntn-board-tint-* is set
    per-column from the same resolvePillColor used for pills, so a pinned
-   color applies here too. */
+   color applies here too. color-mix dilutes it toward the page's own
+   background rather than using the pill's bg color at full strength —
+   a tint this size needs to read as pale, not as another pill. */
 .ntn-board-column-tinted {
-	background: var(--ntn-board-tint-light);
+	background: color-mix(in srgb, var(--ntn-board-tint-light) 30%, var(--background-primary));
 	border-radius: 8px;
 	padding: 8px;
 }
 
 .theme-dark .ntn-board-column-tinted {
-	background: var(--ntn-board-tint-dark);
+	background: color-mix(in srgb, var(--ntn-board-tint-dark) 30%, var(--background-primary));
 }
 
 .ntn-board-column-header {
@@ -1235,6 +1237,11 @@
 	align-items: flex-start;
 	padding: 4px 0;
 	font-weight: 600;
+	/* Same flex min-width: auto issue as .ntn-board-column itself: without
+	   this, an unbreakable (nowrap) pill label inside pushes the header —
+	   and visually, the whole column — wider than the fixed column width
+	   instead of truncating. */
+	min-width: 0;
 }
 
 .ntn-board-cards {
@@ -1391,6 +1398,11 @@
 	flex-direction: column;
 	align-items: flex-start;
 	gap: 4px;
+	/* A flex item (of .ntn-board-column-header) with min-width: auto would
+	   otherwise grow to fit an unbreakable pill label instead of letting
+	   it truncate — see the comment on .ntn-board-column-header. */
+	min-width: 0;
+	max-width: 100%;
 }
 
 .ntn-board-header-pill-nested {
