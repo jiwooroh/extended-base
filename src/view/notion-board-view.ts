@@ -19,7 +19,7 @@ import {
 	MarkdownRenderer,
 } from 'obsidian';
 import { LOG_PREFIX, NOTION_BOARD_VIEW } from '../constants';
-import { PinnedColors, applyPillColor, colorByName } from '../lib/colors';
+import { PinnedColors, applyPillColor, colorByName, resolvePillColor } from '../lib/colors';
 import { PillDetection, computePillProps, parsePinnedColors, stripPath } from '../lib/pills';
 import { buildFolderGroups, GroupNode, hideSoleTopLevelFolder, isGroupedByFolder } from '../lib/groups';
 import { getPropertyMetaType } from '../lib/property-types';
@@ -101,6 +101,16 @@ export class NotionBoardView extends BasesView {
 		if (!Array.isArray(hiddenGroups)) hiddenGroups = [];
 		const folderGrouped = isGroupedByFolder(this.app, this.data.groupedData);
 
+		// Off by default so existing boards look unchanged: tag-grouped
+		// columns already always show their pills regardless of this
+		// setting, and folder-grouped columns stay plain bold text until
+		// opted in. 'label' additionally colors a folder column's own
+		// heading; 'background' tints every column's background with its
+		// group color; 'both' does both.
+		const colorDisplay = (this.config.get('groupColorDisplay') as string) || 'off';
+		const showLabelColor = colorDisplay === 'label' || colorDisplay === 'both';
+		const showBgTint = colorDisplay === 'background' || colorDisplay === 'both';
+
 		// One column per *top-level* group. For folder grouping this walks
 		// the same nested tree table/list use (so the sole top-level
 		// wrapper folder is hidden the same way), but — unlike table/list —
@@ -146,6 +156,14 @@ export class NotionBoardView extends BasesView {
 			if (hiddenGroups.includes(col.fullKey)) continue;
 
 			const colWrap = boardContainer.createDiv({ cls: 'ntn-board-column' });
+			if (showBgTint) {
+				colWrap.addClass('ntn-board-column-tinted');
+				const c = resolvePillColor(col.fullKey, this.pinnedColors);
+				colWrap.setCssProps({
+					'--ntn-board-tint-light': c.lightBg,
+					'--ntn-board-tint-dark': c.darkBg,
+				});
+			}
 			const colHeader = colWrap.createDiv({ cls: 'ntn-board-column-header' });
 
 			colHeader.addEventListener('contextmenu', (evt) => {
@@ -164,11 +182,18 @@ export class NotionBoardView extends BasesView {
 			const headerTitles = colHeader.createDiv({ cls: 'ntn-board-column-titles' });
 
 			if (folderGrouped) {
-				// One flat, plain-text label for the folder that directly
-				// contains these files — not the pill-per-level stack below,
-				// and not the full vault-root-down path. A folder isn't a
-				// tag/value, so it doesn't get a colored chip.
-				headerTitles.createSpan({ cls: 'ntn-group-folder-label', text: col.key });
+				// One flat label for the folder that directly contains these
+				// files — not the pill-per-level stack below, and not the
+				// full vault-root-down path. Plain bold text by default (a
+				// folder isn't really a tag), but the "Show group color as"
+				// view option can color it like any other pill.
+				if (showLabelColor) {
+					const pill = headerTitles.createSpan({ cls: 'ntn-pill ntn-group-folder-pill' });
+					this.applyPillColor(pill, col.fullKey);
+					pill.setText(col.key);
+				} else {
+					headerTitles.createSpan({ cls: 'ntn-group-folder-label', text: col.key });
+				}
 			} else {
 				const parts = col.fullKey === 'No Status' ? ['No Status'] : col.fullKey.split('/');
 				for (let i = 0; i < parts.length; i++) {
@@ -226,20 +251,23 @@ export class NotionBoardView extends BasesView {
 
 		// Hidden groups collapse to a narrow strip instead of disappearing —
 		// their name still reads (rotated) and clicking one un-hides it. All
-		// of them render after every visible column, so they line up at the
-		// right edge of the board rather than sitting wherever they used to be.
-		for (const col of columns) {
-			if (!hiddenGroups.includes(col.fullKey)) continue;
-
-			const collapsed = boardContainer.createDiv({
-				cls: 'ntn-board-column-collapsed',
-				attr: { 'aria-label': `Show "${col.key}"` },
-			});
-			collapsed.createSpan({ cls: 'ntn-board-collapsed-label', text: col.key });
-			collapsed.createSpan({ cls: 'ntn-group-count', text: String(col.entries.length) });
-			collapsed.addEventListener('click', () => {
-				this.config.set('hiddenGroups', hiddenGroups.filter((k) => k !== col.fullKey));
-			});
+		// of them stack vertically in one narrow rail at the right edge of
+		// the board (not side by side as separate full-height columns), so
+		// hiding several groups doesn't eat up horizontal space.
+		const hiddenCols = columns.filter((col) => hiddenGroups.includes(col.fullKey));
+		if (hiddenCols.length) {
+			const rail = boardContainer.createDiv({ cls: 'ntn-board-hidden-rail' });
+			for (const col of hiddenCols) {
+				const collapsed = rail.createDiv({
+					cls: 'ntn-board-column-collapsed',
+					attr: { 'aria-label': `Show "${col.key}"` },
+				});
+				collapsed.createSpan({ cls: 'ntn-board-collapsed-label', text: col.key });
+				collapsed.createSpan({ cls: 'ntn-group-count', text: String(col.entries.length) });
+				collapsed.addEventListener('click', () => {
+					this.config.set('hiddenGroups', hiddenGroups.filter((k) => k !== col.fullKey));
+				});
+			}
 		}
 
 		// ---- "+ New" footer for the entire board (if they want an unassigned note) ----
