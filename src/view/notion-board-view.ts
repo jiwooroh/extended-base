@@ -19,7 +19,7 @@ import {
 	MarkdownRenderer,
 } from 'obsidian';
 import { LOG_PREFIX, NOTION_BOARD_VIEW } from '../constants';
-import { PinnedColors, applyPillColor, colorByName, resolvePillColor } from '../lib/colors';
+import { NOTION_COLORS, PinnedColors, applyColorVars, applyPillColor, colorByName, resolvePillColor } from '../lib/colors';
 import { PillDetection, computePillProps, parsePinnedColors, stripPath } from '../lib/pills';
 import { buildFolderGroups, GroupNode, hideSoleTopLevelFolder, isGroupedByFolder } from '../lib/groups';
 import { getPropertyMetaType } from '../lib/property-types';
@@ -51,12 +51,15 @@ export class NotionBoardView extends BasesView {
 	private selectEditor: SelectEditor | null = null;
 	/** Set of subgroup full keys (nested folders within a column) that are currently collapsed. */
 	private collapsedSubgroups = new Set<string>();
+	/** The open column-color picker flyout, if any (also drives outside-click detection). */
+	private colorMenuEl: HTMLElement | null = null;
 
 	constructor(controller: QueryController, parentEl: HTMLElement) {
 		super(controller);
 		this.queryCtrl = controller;
 		this.rootEl = parentEl.createDiv({ cls: 'ntn-root ntn-board-view' });
 		this.register(() => this.closeSelectMenu());
+		this.register(() => this.closeColorMenu());
 		// rootEl.doc resolves to the view's own document, so this also works
 		// when the view lives in a popout window (plain `document` would not).
 		// One persistent capture-phase listener that no-ops unless a menu is open
@@ -71,7 +74,61 @@ export class NotionBoardView extends BasesView {
 			if (this.selectEditor.anchorEl.contains(target)) return;
 			this.closeSelectMenu();
 		}, { capture: true });
+		this.registerDomEvent(this.rootEl.doc, 'pointerdown', (evt) => {
+			if (!this.colorMenuEl) return;
+			if (this.colorMenuEl.contains(evt.target as Node)) return;
+			this.closeColorMenu();
+		}, { capture: true });
 		this.patchToolbarNew();
+	}
+
+	private closeColorMenu(): void {
+		this.colorMenuEl?.remove();
+		this.colorMenuEl = null;
+	}
+
+	/**
+	 * Open a Notion-palette color-swatch flyout anchored under `anchorEl`,
+	 * mirroring the select editor's own color picker (same markup/CSS
+	 * classes) so a board column header gets the identical picker. Picking
+	 * a color pins it for `fullKey` via the same pinnedColors mechanism the
+	 * pill select editor writes to.
+	 */
+	private openColumnColorMenu(anchorEl: HTMLElement, fullKey: string): void {
+		this.closeColorMenu();
+		this.closeSelectMenu();
+		const menu = this.rootEl.doc.body.createDiv({ cls: 'ntn-root ntn-color-menu' });
+		this.colorMenuEl = menu;
+
+		const options = [{ name: 'default' }, ...NOTION_COLORS];
+		for (const c of options) {
+			const item = menu.createDiv({ cls: 'ntn-color-option' });
+			const swatch = item.createSpan({ cls: 'ntn-color-swatch' });
+			if (c.name !== 'default') {
+				applyColorVars(swatch, c as typeof NOTION_COLORS[0]);
+			}
+			item.createSpan({ cls: 'ntn-color-name', text: c.name.charAt(0).toUpperCase() + c.name.slice(1) });
+			item.addEventListener('click', (evt) => {
+				evt.stopPropagation();
+				this.setPinnedColor(fullKey, c.name);
+				this.closeColorMenu();
+				this.onDataUpdated();
+			});
+		}
+
+		// Position is fixed (set in CSS); anchor below the header, then
+		// nudge back on screen if that would overflow — same clamp the
+		// select editor's own color picker uses.
+		const anchorRect = anchorEl.getBoundingClientRect();
+		menu.setCssStyles({ left: `${anchorRect.left}px`, top: `${anchorRect.bottom + 4}px` });
+		const win = this.rootEl.win;
+		const menuRect = menu.getBoundingClientRect();
+		if (menuRect.bottom > win.innerHeight - 8) {
+			menu.setCssStyles({ top: `${Math.max(8, anchorRect.top - menuRect.height - 4)}px` });
+		}
+		if (menuRect.right > win.innerWidth - 8) {
+			menu.setCssStyles({ left: `${Math.max(8, win.innerWidth - menuRect.width - 8)}px` });
+		}
 	}
 
 
@@ -166,9 +223,16 @@ export class NotionBoardView extends BasesView {
 			}
 			const colHeader = colWrap.createDiv({ cls: 'ntn-board-column-header' });
 
+			const headerTitles = colHeader.createDiv({ cls: 'ntn-board-column-titles' });
+
 			colHeader.addEventListener('contextmenu', (evt) => {
 				evt.preventDefault();
 				const menu = new Menu();
+				menu.addItem((item) => {
+					item.setTitle('Set color')
+						.setIcon('palette')
+						.onClick(() => this.openColumnColorMenu(headerTitles, col.fullKey));
+				});
 				menu.addItem((item) => {
 					item.setTitle('Hide group')
 						.setIcon('eye-off')
@@ -179,7 +243,6 @@ export class NotionBoardView extends BasesView {
 				});
 				menu.showAtMouseEvent(evt);
 			});
-			const headerTitles = colHeader.createDiv({ cls: 'ntn-board-column-titles' });
 
 			if (folderGrouped) {
 				// One flat label for the folder that directly contains these
