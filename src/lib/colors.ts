@@ -19,19 +19,19 @@ export interface NotionColor {
 export type PinnedColors = Map<string, NotionColor>;
 
 /**
- * Notion's official color palette (light/dark background + text pairs), from
- * https://docs.super.so/notion-colors. Backgrounds and text differ per theme.
+ * Notion's official color palette (light/dark background + text pairs).
+ * Backgrounds and text differ per theme.
  */
 export const NOTION_COLORS: NotionColor[] = [
-	{ name: 'gray',   lightBg: '#EBECED', lightFg: 'var(--text-normal)', darkBg: '#454B4E', darkFg: 'var(--text-normal)' },
-	{ name: 'brown',  lightBg: '#E9E5E3', lightFg: '#64473A', darkBg: '#434040', darkFg: '#937264' },
-	{ name: 'orange', lightBg: '#FAEBDD', lightFg: '#D9730D', darkBg: '#594A3A', darkFg: '#FFA344' },
-	{ name: 'yellow', lightBg: '#FBF3DB', lightFg: '#DFAB01', darkBg: '#59563B', darkFg: '#FFDC49' },
-	{ name: 'green',  lightBg: '#DDEDEA', lightFg: '#0F7B6C', darkBg: '#354C4B', darkFg: '#4DAB9A' },
-	{ name: 'blue',   lightBg: '#DDEBF1', lightFg: '#0B6E99', darkBg: '#364954', darkFg: '#529CCA' },
-	{ name: 'purple', lightBg: '#EAE4F2', lightFg: '#6940A5', darkBg: '#443F57', darkFg: '#9A6DD7' },
-	{ name: 'pink',   lightBg: '#F4DFEB', lightFg: '#AD1A72', darkBg: '#533B4C', darkFg: '#E255A1' },
-	{ name: 'red',    lightBg: '#FBE4E4', lightFg: '#E03E3E', darkBg: '#594141', darkFg: '#FF7369' },
+	{ name: 'gray',   lightBg: '#F1F1EF', lightFg: '#787774', darkBg: '#3C4144', darkFg: '#9FA4A8' },
+	{ name: 'brown',  lightBg: '#F4EEEE', lightFg: '#9E6B53', darkBg: '#4C3E35', darkFg: '#D49675' },
+	{ name: 'orange', lightBg: '#FBEDE7', lightFg: '#C86F21', darkBg: '#553B29', darkFg: '#E98D36' },
+	{ name: 'yellow', lightBg: '#F4F1E5', lightFg: '#B57E33', darkBg: '#4A3E2C', darkFg: '#C99D46' },
+	{ name: 'green',  lightBg: '#EDF3EB', lightFg: '#458262', darkBg: '#2F443A', darkFg: '#72B183' },
+	{ name: 'blue',   lightBg: '#E7F3F8', lightFg: '#347EA9', darkBg: '#2D4156', darkFg: '#66AADA' },
+	{ name: 'purple', lightBg: '#F4F0F7', lightFg: '#9165B0', darkBg: '#453A5B', darkFg: '#B098D8' },
+	{ name: 'pink',   lightBg: '#F9EEF3', lightFg: '#C14C8A', darkBg: '#51384D', darkFg: '#DE84D1' },
+	{ name: 'red',    lightBg: '#FDEBEC', lightFg: '#D34C47', darkBg: '#5E3436', darkFg: '#EA878C' },
 ];
 
 /** Deterministic color per tag string so pills stay stable across renders. */

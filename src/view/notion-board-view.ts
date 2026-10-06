@@ -312,19 +312,21 @@ export class NotionBoardView extends BasesView {
 			colNew.addEventListener('click', () => void this.createAndOpenPage());
 		}
 
-		// Hidden groups collapse to a narrow strip instead of disappearing —
-		// their name still reads (rotated) and clicking one un-hides it. All
-		// of them stack vertically in one narrow rail at the right edge of
-		// the board (not side by side as separate full-height columns), so
-		// hiding several groups doesn't eat up horizontal space.
+		// Hidden groups collapse to a pill-shaped strip instead of
+		// disappearing — their name still reads and clicking one un-hides
+		// it. All of them stack vertically in one narrow rail at the right
+		// edge of the board (not side by side as separate full-height
+		// columns), so hiding several groups doesn't eat up horizontal
+		// space.
 		const hiddenCols = columns.filter((col) => hiddenGroups.includes(col.fullKey));
 		if (hiddenCols.length) {
 			const rail = boardContainer.createDiv({ cls: 'ntn-board-hidden-rail' });
 			for (const col of hiddenCols) {
 				const collapsed = rail.createDiv({
-					cls: 'ntn-board-column-collapsed',
+					cls: 'ntn-board-column-collapsed ntn-pill',
 					attr: { 'aria-label': `Show "${col.key}"` },
 				});
+				this.applyPillColor(collapsed, col.fullKey);
 				collapsed.createSpan({ cls: 'ntn-board-collapsed-label', text: col.key });
 				collapsed.createSpan({ cls: 'ntn-group-count', text: String(col.entries.length) });
 				collapsed.addEventListener('click', () => {
