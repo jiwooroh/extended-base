@@ -1356,11 +1356,15 @@
 }
 
 /* A hidden group collapses to this short horizontal bar instead of
-   disappearing — click it to un-hide. A fixed width (min/max, not just
-   width — a flex item's default min-width: auto would otherwise let a
-   long label grow it wider than a short one's) keeps every strip the
-   same size regardless of label length; the label itself truncates with
-   an ellipsis rather than wrapping or forcing the bar wider. */
+   disappearing — click it to un-hide. Styled as a pill (the .ntn-pill
+   class on the element itself supplies the color, via applyPillColor —
+   same mechanism the column header's own pills use) rather than a plain
+   bordered box. A fixed width (min/max, not just width — a flex item's
+   default min-width: auto would otherwise let a long label grow it wider
+   than a short one's) keeps every strip the same size regardless of
+   label length; the label itself truncates with an ellipsis rather than
+   wrapping or forcing the bar wider. Properties here override .ntn-pill's
+   own display/padding/width defaults — later in the stylesheet wins. */
 .ntn-board-column-collapsed {
 	flex: 0 0 auto;
 	width: 160px;
@@ -1371,14 +1375,16 @@
 	justify-content: space-between;
 	gap: 8px;
 	padding: 6px 10px;
-	border: 1px solid var(--ntn-border);
-	border-radius: 6px;
 	cursor: pointer;
-	transition: background 20ms ease-in;
+	transition: filter 20ms ease-in;
 }
 
 .ntn-board-column-collapsed:hover {
-	background: var(--ntn-hover);
+	filter: brightness(0.96);
+}
+
+.theme-dark .ntn-board-column-collapsed:hover {
+	filter: brightness(1.1);
 }
 
 .ntn-board-collapsed-label {
@@ -1388,7 +1394,19 @@
 	min-width: 0;
 	font-weight: 600;
 	font-size: 14px;
-	color: var(--ntn-text);
+	/* Inherit the pill's own fg color (set via applyPillColor) rather
+	   than a fixed one. */
+	color: inherit;
+}
+
+/* The count badge's usual muted gray would clash with the pill's colored
+   background; let it inherit the pill's fg (at reduced opacity so it
+   still reads as secondary) instead, and drop the margin the header's
+   layout used — this one is positioned by justify-content: space-between. */
+.ntn-board-column-collapsed .ntn-group-count {
+	margin-left: 0;
+	color: inherit;
+	opacity: 0.7;
 }
 
 /* Board column header: group levels stack, each nested level stepping in.
