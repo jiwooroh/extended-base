@@ -163,8 +163,39 @@
 
 			<details class="release" open>
 				<summary>
-					<span class="ver">1.1.0</span>
+					<span class="ver">1.1.1</span>
 					<span class="tag">Latest</span>
+				</summary>
+				<div class="body">
+					<ul>
+						<li>Fixed: an empty/absent property showed the literal text
+							<code>null</code> in a cell instead of staying blank — and
+							could show up as a spurious <code>null</code> entry in a
+							pill column's own list of known values. Bases represents
+							"no value" with a <code>NullValue</code> object (not plain
+							JavaScript <code>null</code>), whose <code>toString()</code>
+							returns the string <code>"null"</code>; every "is this value
+							empty?" check here compared against JS
+							<code>null</code>/<code>undefined</code> only. Now treated as
+							empty everywhere a value's presence gates rendering,
+							inline-edit prefill, sorting, and the pill value list.</li>
+						<li>Fixed: a scalar pill property (e.g. a <code>select</code>-typed
+							<code>status</code> or <code>priority</code>) didn't open the
+							select editor on click in a base using the legacy
+							<code>type: bases</code> view declaration — it fell through to
+							plain text editing instead. That declaration hands properties
+							to the view already normalized to their bare name (no
+							<code>note.</code> prefix), and editability was decided with
+							<code>prop.startsWith('note.')</code>, which a prefix-less id
+							never matches. Now editable unless a property is explicitly
+							<code>file.*</code> or <code>formula.*</code>.</li>
+					</ul>
+				</div>
+			</details>
+
+			<details class="release">
+				<summary>
+					<span class="ver">1.1.0</span>
 				</summary>
 				<div class="body">
 					<ul>
