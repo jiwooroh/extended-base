@@ -73,6 +73,37 @@ export function buildListViewOptions(_config: BasesViewConfig): BasesAllOptions[
 	];
 }
 
+export function buildFeedViewOptions(_config: BasesViewConfig): BasesAllOptions[] {
+	return [
+		{
+			type: 'text',
+			key: 'rowCount',
+			displayName: 'Card count limit (e.g. 5, 10, 25 or custom. 0 for all)',
+			default: '5',
+		},
+		{
+			type: 'dropdown',
+			key: 'openMode',
+			displayName: 'Open notes in',
+			default: 'tab',
+			options: {
+				tab: 'New tab',
+				panel: 'Page panel',
+			},
+		},
+		{
+			type: 'multitext',
+			key: 'pillProperties',
+			displayName: 'Properties to show as colored pills',
+		},
+		{
+			type: 'multitext',
+			key: 'pinnedColors',
+			displayName: 'Pinned pill colors',
+		},
+	];
+}
+
 export function buildBoardViewOptions(_config: BasesViewConfig): BasesAllOptions[] {
 	return [
 		{

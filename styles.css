@@ -1487,3 +1487,134 @@
 	margin-left: var(--ntn-indent, 0);
 	opacity: 0.9;
 }
+
+/* ============================================================
+   Notion Feed View
+   ============================================================ */
+
+.ntn-feed-view {
+	padding: 16px;
+}
+
+.ntn-feed-container {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.ntn-feed-container .ntn-group-row {
+	display: flex;
+	align-items: center;
+	padding: 8px 4px;
+}
+
+.ntn-feed-entry {
+	background: var(--background-primary);
+	border: 1px solid var(--ntn-border);
+	border-radius: 8px;
+	box-shadow: rgba(15, 15, 15, 0.05) 0 1px 2px;
+	overflow: hidden;
+}
+
+.theme-dark .ntn-feed-entry {
+	box-shadow: rgba(0, 0, 0, 0.2) 0 1px 2px;
+}
+
+.ntn-feed-header {
+	padding: 16px 20px 8px;
+}
+
+.ntn-feed-title {
+	display: block;
+	font-size: 18px;
+	font-weight: 700;
+	color: var(--ntn-text);
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.ntn-feed-title:hover {
+	color: var(--interactive-accent);
+}
+
+.ntn-feed-meta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+	margin-top: 8px;
+}
+
+.ntn-feed-meta-cell {
+	border-radius: 4px;
+	padding: 2px;
+}
+
+.ntn-feed-meta-cell.ntn-editable {
+	cursor: pointer;
+}
+
+.ntn-feed-meta-cell.ntn-editable:hover {
+	background: var(--ntn-hover);
+}
+
+.ntn-feed-body {
+	padding: 0 20px 16px;
+	min-height: 48px;
+	font-size: 14px;
+	line-height: 1.6;
+}
+
+/* The embedded editor is a whole reparented MarkdownView — mute everything
+   that reads as "its own pane" (header, action icons, the duplicate inline
+   title Notion-style card already shows above) so it reads as plain card
+   content instead. */
+.ntn-feed-body .view-header,
+.ntn-feed-body .view-actions {
+	display: none;
+}
+
+.ntn-feed-body .inline-title {
+	display: none;
+}
+
+.ntn-feed-body .view-content {
+	padding: 0 !important;
+	height: auto !important;
+}
+
+.ntn-feed-body .markdown-source-view {
+	font-family: var(--font-text);
+}
+
+.ntn-feed-body .cm-editor {
+	border: none;
+	background: transparent;
+}
+
+.ntn-feed-body .cm-scroller {
+	padding: 0 !important;
+	margin: 0 !important;
+	--file-margins: 0px !important;
+	--file-line-width: 100% !important;
+}
+
+.ntn-feed-body .cm-content {
+	padding: 0 !important;
+	min-height: 0 !important;
+}
+
+.ntn-feed-body-fallback {
+	display: flex;
+	align-items: center;
+	color: var(--ntn-text-muted);
+}
+
+.ntn-feed-fallback-link {
+	cursor: pointer;
+	text-decoration: underline;
+}
+
+.ntn-feed-fallback-link:hover {
+	color: var(--ntn-text);
+}

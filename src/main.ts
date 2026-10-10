@@ -4,11 +4,12 @@
  * Obsidian-agnostic helpers live in `./lib`.
  */
 import { Notice, Plugin } from 'obsidian';
-import { NOTION_TABLE_VIEW, NOTION_LIST_VIEW, NOTION_BOARD_VIEW } from './constants';
-import { buildViewOptions, buildListViewOptions, buildBoardViewOptions } from './view-options';
+import { NOTION_TABLE_VIEW, NOTION_LIST_VIEW, NOTION_BOARD_VIEW, NOTION_FEED_VIEW } from './constants';
+import { buildViewOptions, buildListViewOptions, buildBoardViewOptions, buildFeedViewOptions } from './view-options';
 import { NotionTableView } from './view/notion-table-view';
 import { NotionListView } from './view/notion-list-view';
 import { NotionBoardView } from './view/notion-board-view';
+import { NotionFeedView } from './view/notion-feed-view';
 
 export default class NotionBasesPlugin extends Plugin {
 	async onload() {
@@ -40,9 +41,17 @@ export default class NotionBasesPlugin extends Plugin {
 			options: buildBoardViewOptions,
 		});
 
-		if (!okTable || !okList || !okBoard) {
+		const okFeed = this.registerBasesView(NOTION_FEED_VIEW, {
+			name: 'Notion Feed',
+			icon: 'newspaper',
+			factory: (controller, containerEl) =>
+				new NotionFeedView(controller, containerEl),
+			options: buildFeedViewOptions,
+		});
+
+		if (!okTable || !okList || !okBoard || !okFeed) {
 			new Notice(
-				`Extended Base: view registration failed (table=${okTable}, list=${okList}, board=${okBoard}). Is the Bases core plugin enabled?`,
+				`Extended Base: view registration failed (table=${okTable}, list=${okList}, board=${okBoard}, feed=${okFeed}). Is the Bases core plugin enabled?`,
 				8000,
 			);
 		}
