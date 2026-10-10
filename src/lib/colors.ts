@@ -15,8 +15,14 @@ export interface NotionColor {
 	darkFg: string;
 }
 
+/** A pinned value's color plus how opaque its pill background renders (0-100). */
+export interface PinnedColorEntry {
+	color: NotionColor;
+	opacity: number;
+}
+
 /** A value → pinned-color map, as produced by `parsePinnedColors`. */
-export type PinnedColors = Map<string, NotionColor>;
+export type PinnedColors = Map<string, PinnedColorEntry>;
 
 /**
  * Notion's official color palette (light/dark background + text pairs).
@@ -59,22 +65,40 @@ function colorKey(text: string): string {
  */
 export function resolvePillColor(text: string, pinned: PinnedColors, useDefaultColor = true): NotionColor {
 	const p = pinned.get(colorKey(text));
-	if (p) return p;
+	if (p) return p.color;
 	if (useDefaultColor) return colorFor(text);
 	return { name: 'default', lightBg: 'transparent', lightFg: 'inherit', darkBg: 'transparent', darkFg: 'inherit' };
 }
 
-/** Set the per-pill CSS variables on an element from an exact palette color. */
-export function applyColorVars(el: HTMLElement, c: NotionColor): void {
+/**
+ * Resolve the opacity (0-100) for a pill value — 100 unless the user pinned
+ * a lower one for it. Only a pinned entry carries an opacity, so a value
+ * still on its deterministic hash color always renders fully opaque until
+ * the user explicitly picks a color for it (opacity is a property of a
+ * pinned color, not of the value by itself).
+ */
+export function resolvePillOpacity(text: string, pinned: PinnedColors): number {
+	return pinned.get(colorKey(text))?.opacity ?? 100;
+}
+
+/**
+ * Set the per-pill CSS variables on an element from an exact palette color.
+ * `opacity` (0-100) fades only the background toward whatever sits behind
+ * the pill (via color-mix), keeping the foreground text fully legible.
+ */
+export function applyColorVars(el: HTMLElement, c: NotionColor, opacity = 100): void {
+	const clamped = Math.max(0, Math.min(100, opacity));
+	const fade = (hex: string) =>
+		clamped >= 100 ? hex : `color-mix(in srgb, ${hex} ${clamped}%, transparent)`;
 	el.setCssProps({
-		'--ntn-pill-bg-light': c.lightBg,
+		'--ntn-pill-bg-light': fade(c.lightBg),
 		'--ntn-pill-fg-light': c.lightFg,
-		'--ntn-pill-bg-dark': c.darkBg,
+		'--ntn-pill-bg-dark': fade(c.darkBg),
 		'--ntn-pill-fg-dark': c.darkFg,
 	});
 }
 
-/** Apply a resolved pill color (pinned override ?? hash) to an element. */
+/** Apply a resolved pill color and opacity (pinned override ?? hash / 100%) to an element. */
 export function applyPillColor(pill: HTMLElement, text: string, pinned: PinnedColors, useDefaultColor = true): void {
-	applyColorVars(pill, resolvePillColor(text, pinned, useDefaultColor));
+	applyColorVars(pill, resolvePillColor(text, pinned, useDefaultColor), resolvePillOpacity(text, pinned));
 }

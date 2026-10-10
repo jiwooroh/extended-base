@@ -97,6 +97,11 @@ export function stripPath(str: string): string {
 	return str.split('/').pop() || str;
 }
 
+/**
+ * Parses `value=color` or `value=color:opacity` (opacity 0-100, defaulting
+ * to 100 when omitted — kept backward compatible with configs saved before
+ * opacity existed).
+ */
 export function parsePinnedColors(raw: unknown): PinnedColors {
 	const pinned: PinnedColors = new Map();
 	if (!Array.isArray(raw)) return pinned;
@@ -104,9 +109,15 @@ export function parsePinnedColors(raw: unknown): PinnedColors {
 		const m = String(item).match(/^(.+?)\s*[=:]\s*(.+)$/);
 		if (!m) continue;
 		const value = m[1].trim().replace(/^#/, '').toLowerCase();
-		const colorName = m[2].trim().toLowerCase();
-		const color = colorByName(colorName);
-		if (value && color) pinned.set(value, color);
+		let colorPart = m[2].trim();
+		let opacity = 100;
+		const opacityMatch = colorPart.match(/^(.+?):(\d{1,3})$/);
+		if (opacityMatch) {
+			colorPart = opacityMatch[1].trim();
+			opacity = Math.max(0, Math.min(100, parseInt(opacityMatch[2], 10)));
+		}
+		const color = colorByName(colorPart.toLowerCase());
+		if (value && color) pinned.set(value, { color, opacity });
 	}
 	return pinned;
 }
