@@ -88,11 +88,6 @@ export class NotionTableView extends BasesView {
 		root.toggleClass('ntn-wrap', this.config.get('wrapCells') !== false);
 		root.toggleClass('ntn-vlines', this.config.get('verticalLines') !== false);
 
-		const textSizePx = { small: 12, medium: 14, large: 16 }[
-			this.config.get('textSize') as string
-		] ?? 14;
-		root.setCssProps({ '--ntn-font-size': `${textSizePx}px` });
-
 		const props = this.applyColumnOrder(this.config.getOrder());
 		this.pills = computePillProps(props, this.data.data, this.config, this.app);
 		this.pinnedColors = parsePinnedColors(this.config.get('pinnedColors'));
