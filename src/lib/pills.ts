@@ -65,7 +65,11 @@ export function computePillProps(
 		const metaType =
 			typeof info === 'string' ? info : info?.widget ?? info?.type;
 		let isList =
-			metaType === 'multitext' || metaType === 'tags' || metaType === 'aliases';
+			metaType === 'multitext' ||
+			metaType === 'tags' ||
+			metaType === 'aliases' ||
+			metaType === 'multiselect' ||
+			metaType === 'multi-select';
 		if (!isList) {
 			for (const entry of entries) {
 				if (entry.getValue(prop) instanceof ListValue) {
@@ -75,12 +79,26 @@ export function computePillProps(
 			}
 		}
 		if (isList) listProps.add(prop);
-		if (isList || bare === 'tags' || userSet.has(bare) || userSet.has(display)) {
+		// `select` (single-choice) is a widget type some property-editing
+		// plugins (e.g. Property Panels) register with metadataTypeManager —
+		// it's scalar, not a list, but still pill-worthy like tags/multitext.
+		const isSelect = metaType === 'select';
+		if (isList || isSelect || bare === 'tags' || userSet.has(bare) || userSet.has(display)) {
 			pillProps.add(prop);
 		}
 	}
 
 	return { pillProps, listProps };
+}
+
+/**
+ * Display text for a pill value: strips only a leading `#` (tag syntax).
+ * Unlike {@link stripPath} (for link/file-path values in plain cells), a
+ * pill shows its value in full, including any `/` — a select option
+ * legitimately named "A/B" reads as "A/B", not truncated down to "B".
+ */
+export function pillLabel(raw: string): string {
+	return raw.replace(/^#/, '');
 }
 
 /** Parse the `pinnedColors` view option (`value=color` entries) into a map. */

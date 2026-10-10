@@ -7,6 +7,7 @@
 export const NOTION_TABLE_VIEW = 'bases';
 export const NOTION_LIST_VIEW = 'notion-list';
 export const NOTION_BOARD_VIEW = 'notion-board';
+export const NOTION_FEED_VIEW = 'notion-feed';
 
 /** Prefix for every console message this plugin emits. */
 export const LOG_PREFIX = '[extended-base]';

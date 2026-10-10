@@ -1,7 +1,7 @@
 {
   "name": "extended-base",
-  "version": "1.0.9",
-  "description": "Notion-style Bases views for Obsidian: table, list, and board, with colored pills, inline editing, and nested groups.",
+  "version": "1.1.0",
+  "description": "Notion-style Bases views for Obsidian: table, list, board, and feed, with colored pills, inline editing, and nested groups.",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",

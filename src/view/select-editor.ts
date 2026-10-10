@@ -12,6 +12,7 @@
  */
 import { BasesEntry, BasesPropertyId, TFile, setIcon } from 'obsidian';
 import { buildColorMenu } from './color-menu';
+import { pillLabel } from '../lib/pills';
 import { valueToStrings } from '../lib/values';
 
 export interface SelectEditorDeps {
@@ -181,7 +182,7 @@ export class SelectEditor {
 		for (const v of this.selected) {
 			const pill = this.pillsWrap.createSpan({ cls: 'ntn-pill' });
 			this.deps.applyColor(pill, v);
-			pill.createSpan({ text: v.split('/').pop() || '' });
+			pill.createSpan({ text: pillLabel(v) });
 			const x = pill.createSpan({ cls: 'ntn-pill-remove', text: '✕' });
 			x.addEventListener('click', (evt) => {
 				evt.stopPropagation();
@@ -301,13 +302,24 @@ export class SelectEditor {
 			// it's currently used.
 			const pill = row.createSpan({ cls: 'ntn-pill' });
 			this.deps.applyColor(pill, o);
-			pill.setText(o.split('/').pop() || '');
+			pill.setText(pillLabel(o));
 			pill.addEventListener('dblclick', (evt) => {
 				evt.stopPropagation();
 				this.startRenameOption(pill, o);
 			});
 
-			// 3. Color square (right)
+			// 3. Edit (pencil) — same rename as double-clicking the pill.
+			const editBtn = row.createSpan({
+				cls: 'ntn-select-edit-btn',
+				attr: { 'aria-label': 'Rename' },
+			});
+			setIcon(editBtn, 'pencil');
+			editBtn.addEventListener('click', (evt) => {
+				evt.stopPropagation();
+				this.startRenameOption(pill, o);
+			});
+
+			// 4. Color square (right)
 			const colorBtn = row.createSpan({
 				cls: 'ntn-select-color-btn',
 				attr: { 'aria-label': 'Change color' },
@@ -326,7 +338,7 @@ export class SelectEditor {
 			row.createSpan({ cls: 'ntn-select-create', text: '+' }); // Align with check
 			const pill = row.createSpan({ cls: 'ntn-pill' });
 			this.deps.applyColor(pill, q);
-			pill.setText(q.split('/').pop() || '');
+			pill.setText(pillLabel(q));
 			row.addEventListener('click', () => this.pick(q));
 		}
 		if (!visible.length && !q) {

@@ -20,7 +20,7 @@ import {
 } from 'obsidian';
 import { LOG_PREFIX, NOTION_BOARD_VIEW } from '../constants';
 import { PinnedColors, applyPillColor, colorByName, resolvePillColor, resolvePillOpacity } from '../lib/colors';
-import { PillDetection, computePillProps, parsePinnedColors, stripPath } from '../lib/pills';
+import { PillDetection, computePillProps, parsePinnedColors, pillLabel, stripPath } from '../lib/pills';
 import { buildFolderGroups, GroupNode, hideSoleTopLevelFolder, isGroupedByFolder } from '../lib/groups';
 import { getPropertyMetaType } from '../lib/property-types';
 import { renamePillValue } from '../lib/rename';
@@ -380,7 +380,7 @@ export class NotionBoardView extends BasesView {
 			for (const item of items) {
 				const pill = wrap.createSpan({ cls: 'ntn-pill' });
 				this.applyPillColor(pill, item, useDefaultColor);
-				pill.setText(item.replace(/^#/, '').split('/').pop() || '');
+				pill.setText(pillLabel(item));
 			}
 			if (editable) {
 				td.addClass('ntn-editable');

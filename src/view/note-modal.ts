@@ -23,6 +23,7 @@ import {
 } from 'obsidian';
 import { LOG_PREFIX } from '../constants';
 import { splitFrontmatter } from '../lib/frontmatter';
+import { pillLabel } from '../lib/pills';
 
 /** What the select editor needs to open anchored to a property row / cell. */
 export interface OpenSelectOpts {
@@ -250,7 +251,7 @@ export class NotePageModal extends Modal {
 			for (const item of items) {
 				const pill = valueEl.createSpan({ cls: 'ntn-pill' });
 				this.deps.applyColor(pill, item);
-				pill.setText(item.replace(/^#/, '').split('/').pop() || '');
+				pill.setText(pillLabel(item));
 			}
 			if (!items.length) this.renderEmpty(valueEl);
 			if (editable) {
