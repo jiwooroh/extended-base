@@ -21,17 +21,6 @@ export function buildViewOptions(_config: BasesViewConfig): BasesAllOptions[] {
 		},
 		{
 			type: 'dropdown',
-			key: 'textSize',
-			displayName: 'Text size',
-			default: 'medium',
-			options: {
-				small: 'Small',
-				medium: 'Medium',
-				large: 'Large',
-			},
-		},
-		{
-			type: 'dropdown',
 			key: 'openMode',
 			displayName: 'Open notes in',
 			default: 'tab',
@@ -60,17 +49,6 @@ export function buildListViewOptions(_config: BasesViewConfig): BasesAllOptions[
 			key: 'rowCount',
 			displayName: 'Row count limit (e.g. 10, 25, 50, 100 or custom. 0 for all)',
 			default: '10',
-		},
-		{
-			type: 'dropdown',
-			key: 'textSize',
-			displayName: 'Text size',
-			default: 'medium',
-			options: {
-				small: 'Small',
-				medium: 'Medium',
-				large: 'Large',
-			},
 		},
 		{
 			type: 'dropdown',
@@ -106,17 +84,6 @@ export function buildBoardViewOptions(_config: BasesViewConfig): BasesAllOptions
 			type: 'dropdown',
 			key: 'boardColumnWidth',
 			displayName: 'Column width',
-			default: 'medium',
-			options: {
-				small: 'Small',
-				medium: 'Medium',
-				large: 'Large',
-			},
-		},
-		{
-			type: 'dropdown',
-			key: 'textSize',
-			displayName: 'Text size',
 			default: 'medium',
 			options: {
 				small: 'Small',
