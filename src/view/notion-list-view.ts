@@ -21,9 +21,9 @@ import { LOG_PREFIX, NOTION_LIST_VIEW } from '../constants';
 import { PinnedColors, applyPillColor, colorByName, resolvePillColor, resolvePillOpacity } from '../lib/colors';
 import { PillDetection, computePillProps, parsePinnedColors, pillLabel, stripPath } from '../lib/pills';
 import { buildFolderGroups, buildGroupTree, countEntries, GroupNode, hideSoleTopLevelFolder, isGroupedByFolder } from '../lib/groups';
-import { getPropertyMetaType } from '../lib/property-types';
+import { getPropertyMetaType, isEditableProp, propBareName } from '../lib/property-types';
 import { renamePillValue } from '../lib/rename';
-import { valueToStrings } from '../lib/values';
+import { isNullish, valueToStrings } from '../lib/values';
 import { NotePageModal, OpenSelectOpts } from './note-modal';
 import { SelectEditor } from './select-editor';
 
@@ -219,8 +219,8 @@ export class NotionListView extends BasesView {
 		}
 
 		const value = entry.getValue(prop);
-		const editable = prop.startsWith('note.');
-		const propName = prop.split('.').slice(1).join('.');
+		const editable = isEditableProp(prop);
+		const propName = propBareName(prop);
 
 		// ---- Pills (lists, tags, user-selected select-like properties) ----
 		if (this.pills.pillProps.has(prop)) {
@@ -262,7 +262,7 @@ export class NotionListView extends BasesView {
 
 		// ---- Plain values: native render, click-to-edit for note.* ----
 		const cellEl = td.createDiv({ cls: 'ntn-cell' });
-		if (value != null) { // Handle both null and undefined
+		if (!isNullish(value)) {
 			const raw = value.toString();
 			// stripPath is for link/file paths only ("Folder/Note" -> "Note");
 			// applying it to freeform text truncates any value that happens to
@@ -283,7 +283,7 @@ export class NotionListView extends BasesView {
 			td.addEventListener('click', (evt) => {
 				// Don't hijack clicks on links rendered inside the cell.
 				if ((evt.target as HTMLElement).closest('a')) return;
-				this.editCell(td, entry, propName, value ? value.toString() : '', kind);
+				this.editCell(td, entry, propName, isNullish(value) ? '' : value.toString(), kind);
 			});
 		}
 	}

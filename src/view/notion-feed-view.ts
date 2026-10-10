@@ -23,6 +23,7 @@ import {
 import { LOG_PREFIX, NOTION_FEED_VIEW } from '../constants';
 import { PinnedColors, applyPillColor, colorByName, resolvePillColor, resolvePillOpacity } from '../lib/colors';
 import { PillDetection, computePillProps, parsePinnedColors, pillLabel } from '../lib/pills';
+import { isEditableProp, propBareName } from '../lib/property-types';
 import { buildFolderGroups, buildGroupTree, countEntries, GroupNode, hideSoleTopLevelFolder, isGroupedByFolder } from '../lib/groups';
 import { renamePillValue } from '../lib/rename';
 import { valueToStrings } from '../lib/values';
@@ -209,8 +210,8 @@ export class NotionFeedView extends BasesView {
 	private renderMetaPill(wrap: HTMLElement, entry: BasesEntry, prop: BasesPropertyId): void {
 		const disableColorColumns = this.config.get('disableColorColumns') as string[] || [];
 		const useDefaultColor = !disableColorColumns.includes(prop);
-		const propName = prop.split('.').slice(1).join('.');
-		const editable = prop.startsWith('note.');
+		const propName = propBareName(prop);
+		const editable = isEditableProp(prop);
 
 		const cell = wrap.createDiv({ cls: 'ntn-pills ntn-feed-meta-cell' });
 		const items = valueToStrings(entry.getValue(prop));
