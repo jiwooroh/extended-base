@@ -1,10 +1,10 @@
 # Extended Base
 
 Notion-style views for [Obsidian Bases](https://help.obsidian.md/bases) —
-**Table**, **List**, and **Board**. Clean chrome, colored value pills,
-inline cell editing, nested collapsible groups (with first-class support
-for grouping by folder), and a Notion-style page panel for editing a note
-without leaving the view.
+**Table**, **List**, **Board**, and **Feed**. Clean chrome, colored value
+pills, inline cell editing, nested collapsible groups (with first-class
+support for grouping by folder), and a Notion-style page panel for editing
+a note without leaving the view.
 
 By [Lucy Roh](https://github.com/lucytheboss).
 
@@ -17,9 +17,9 @@ By [Lucy Roh](https://github.com/lucytheboss).
 > views, nested groups, column resizing/renaming, and per-column
 > options on top of GoodBases 0.5.3. See [Credits](#credits).
 
-## The three views
+## The four views
 
-Pick one from the base's view selector. All three share the same pill
+Pick one from the base's view selector. All four share the same pill
 colors, select editor, inline editing, folder/nested grouping, and page
 panel.
 
@@ -27,9 +27,6 @@ panel.
 
 The full database grid.
 
-- **Sticky header** — the table scrolls in its own region (up to the full
-  height of the view) so the column headers can stay pinned to the top
-  while you scroll through a long list of rows.
 - **Resizable columns** — drag the border between two headers; widths are
   saved per view and aren't capped once you've resized past the default.
 - **Drag to reorder, click to sort** — press and drag a header to move
@@ -93,15 +90,33 @@ so `Project/Alpha` shows both levels.
 > Cards are not drag-and-drop yet; change a note's group from the card's
 > own pill cell or the page panel.
 
+### Notion Feed
+
+A vertical feed of full note cards — title, a row of colored pill
+properties, and the note's own body shown directly in the card.
+
+- The body isn't a read-only preview — it's the note's own live editor
+  (the same one Obsidian uses for a normal tab) embedded right in the
+  card, so you can read and edit in place without opening anything.
+- The title and pill properties work exactly like the other views:
+  click a title to open the note (in a tab, or the page panel if *Open
+  notes in* is set to that), click a pill to edit it in the shared
+  select editor.
+- **Card count limit** — a view option (default 5) caps how many cards
+  render at once, since each one carries a full embedded editor.
+- Supports the same folder/property grouping as the list view.
+
+![A Notion Feed card with a live-editable note body](docs/asset/feed_view.png)
+
 ## Nested & folder groups
 
 Group by a property whose values use `/` as a separator and Extended Base
 builds a real tree instead of a flat list. `Work/Client/Alpha` becomes
-three nested levels, each with its own collapsible header and a count of
-everything beneath it. Click **▼** / **▶** on any header to fold it.
-Pills throughout the views show only the last path segment (`Work/Client`
-renders as `Client`), so nested tags stay readable — the underlying value
-is unchanged.
+three nested levels, each with its own collapsible header (labeled with
+just that level's own segment) and a count of everything beneath it.
+Click **▼** / **▶** on any header to fold it. This only affects *group
+headers* — an ordinary pill (in a cell, the select editor, a feed card's
+meta row) always shows its full value, `/` included.
 
 **Grouping by `file.folder` gets a dedicated layout**, since Bases
 produces one flat group per folder and a folder path isn't really a tag.
@@ -162,10 +177,13 @@ then opens the panel instead of a tab (Ctrl/Cmd-click still opens a tab):
 - **Theme-aware chrome** — text, borders, hover states, and the view's own
   background all come from Obsidian's active theme, so Extended Base
   matches whatever theme (not just light/dark mode) you have installed.
-- **Colored pills** — list properties (tags, multitext) render as pills
-  using Notion's 9-color palette, with accurate light- and dark-mode
-  values. Colors are assigned by a deterministic hash, so a value keeps
-  its color forever — unless you choose your own.
+- **Colored pills** — list properties (tags, multitext) and single-choice
+  `select` properties render as pills using Notion's 9-color palette, with
+  accurate light- and dark-mode values. Colors are assigned by a
+  deterministic hash, so a value keeps its color forever — unless you
+  choose your own. A pill always shows its full value (`/` included) —
+  see [Nested & folder groups](#nested--folder-groups) for the one place
+  `/` does get split: group headers.
 - **Per-value color picker** — click the colored square on the right of
   any row in the pill select menu and pick from Notion's palette, or
   **Default** for no color. Your choice is saved and applies everywhere
@@ -178,7 +196,12 @@ then opens the panel instead of a tab (Ctrl/Cmd-click still opens a tab):
   value already used for that property, with a checkmark on the selected
   ones, search, and create-on-Enter. Drag a row's grip handle to reorder
   the option list — sorting a table column by that property (click its
-  header) follows the order you set instead of alphabetical.
+  header) follows the order you set instead of alphabetical. Click the
+  pencil icon (or double-click the pill) to rename a value everywhere it's
+  currently used — every note holding it gets rewritten, in the
+  background, as you confirm the new name.
+
+  ![Renaming a value from the select editor, pencil icon next to the color picker](docs/asset/rename_pencil.png)
 - **Inline editing** — click a cell to edit text and numbers in a
   floating input sized to the cell; long text opens a textarea (Enter
   saves, Shift+Enter adds a newline). Checkboxes toggle in place.
@@ -197,21 +220,21 @@ then opens the panel instead of a tab (Ctrl/Cmd-click still opens a tab):
 
 1. Enable the **Bases** core plugin and create a base.
 2. In the base toolbar, open the view selector and choose **Notion
-   Table**, **Notion List**, or **Notion Board**.
+   Table**, **Notion List**, **Notion Board**, or **Notion Feed**.
 3. Configure columns, filters, sorting, and grouping with the normal
    Bases controls. Each view adds its own settings on top:
 
-| Option | Table | List | Board |
-| --- | :---: | :---: | :---: |
-| Wrap all content | ✅ | | |
-| Show vertical lines | ✅ | | |
-| Row count limit | ✅ (footer) | ✅ | |
-| Column width (Small/Medium/Large) | | | ✅ |
-| Show group color as (Off/Label/Background/Both) | | | ✅ |
-| Open notes in | ✅ | ✅ | ✅ |
-| Hidden groups | | | ✅ |
-| Properties to show as colored pills | ✅ | ✅ | ✅ |
-| Pinned pill colors | ✅ | ✅ | ✅ |
+| Option | Table | List | Board | Feed |
+| --- | :---: | :---: | :---: | :---: |
+| Wrap all content | ✅ | | | |
+| Show vertical lines | ✅ | | | |
+| Row / card count limit | ✅ (footer) | ✅ | | ✅ |
+| Column width (Small/Medium/Large) | | | ✅ | |
+| Show group color as (Off/Label/Background/Both) | | | ✅ | |
+| Open notes in | ✅ | ✅ | ✅ | ✅ |
+| Hidden groups | | | ✅ | |
+| Properties to show as colored pills | ✅ | ✅ | ✅ | ✅ |
+| Pinned pill colors | ✅ | ✅ | ✅ | ✅ |
 
 Column widths, order, sort, icons, renamed headers, per-column wrapping,
 and per-column color toggles are all set directly on the table (drag /
@@ -262,9 +285,9 @@ plugin in Obsidian after each build.
 
 Source layout:
 
-- `src/main.ts` — registers the three Bases views.
+- `src/main.ts` — registers the four Bases views.
 - `src/view/notion-table-view.ts`, `notion-list-view.ts`,
-  `notion-board-view.ts` — one file per view.
+  `notion-board-view.ts`, `notion-feed-view.ts` — one file per view.
 - `src/view/note-modal.ts` — the page panel; `select-editor.ts` — the pill
   select menu.
 - `src/lib/` — pill detection, the Notion color palette, group-tree and
@@ -273,6 +296,8 @@ Source layout:
 
 ## Roadmap
 
+- ✅ **Feed view** (1.1.0) — a vertical feed of note cards with a live,
+  directly-editable embedded body.
 - ✅ **List and Board views** (1.0.1) — a compact list layout and a Kanban
   board built from the base's grouping.
 - ✅ **Nested groups** (1.0.1) — `/`-separated group values become a
@@ -293,6 +318,41 @@ Source layout:
 - ⚪️ **Gallery view** — card galleries with cover images.
 
 ## Changelog
+
+### 1.1.0
+
+- **Added:** a fourth view, **Notion Feed** — a vertical feed of full note
+  cards (title, colored pill properties, and the note's body), styled
+  consistently with the other three views and sharing their pill/color/
+  grouping code. The body is the note's own live editor embedded directly
+  in the card, not a read-only preview, so you can edit it in place. See
+  [Notion Feed](#notion-feed).
+- **Added:** `select` (single-choice) properties — a widget type some
+  property-editing plugins (e.g. Property Panels) register, or a vault
+  property typed that way — are now auto-detected as pill columns, the
+  same way `tags`/`multitext`/`aliases` already were. Previously a
+  `select` property's cells weren't recognized as editable by this
+  plugin at all, so clicking one fell through to Obsidian's own built-in
+  list-property editor instead of this plugin's pill menu.
+- **Added:** a pencil icon next to a pill's color button in the select
+  editor — click it (or still double-click the pill) to rename that
+  value everywhere it's used. Previously renaming only worked via the
+  easy-to-miss double-click gesture.
+- **Changed:** a pill always shows its full value now, `/` included — a
+  select option named `A/B` used to display as just `B` (the same
+  last-segment stripping group headers use for `/`-nested tag paths was
+  being applied to every pill's own label too). Group headers are
+  unaffected: a `Work/Client/Alpha` grouping still shows one level per
+  header, as before.
+- **Removed:** the base's own scroll region and sticky table header. The
+  view no longer caps its own height and creates a second, independent
+  scrollbar (`height: 100%; max-height: 100vh` on the view root) — it now
+  grows to its natural content height and the surrounding pane scrolls it
+  like any other content. The tradeoff: the table header no longer stays
+  pinned to the top while you scroll past it.
+- **Fixed:** the pill select menu could, in rare cases, stretch to fill
+  the entire window height as a mostly-empty box below its actual (much
+  shorter) content, instead of sizing to fit it.
 
 ### 1.0.9
 
