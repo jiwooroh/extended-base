@@ -17,25 +17,13 @@
 	font-size: 14px;
 	color: var(--ntn-text);
 	background: var(--background-primary);
-	/* Sticky ought to pin against Bases' own outer scroller, so the header
-	   scrolls with the rest of the pane right up until it hits the true
-	   top of the screen — that was tried (overflow-y: clip, letting
-	   .ntn-root defer to whatever ancestor really scrolls) and the header
-	   never stuck at all, which points at something further up that chain
-	   blocking sticky outright (a transform/contain, or that ancestor not
-	   truly being a scroll container) rather than at .ntn-root. Diagnosing
-	   that means reading Bases' own (private) CSS, which isn't available
-	   here — so .ntn-root instead becomes its own genuinely bounded,
-	   scrolling box, independent of whatever the outer pane does. Sticky
-	   then reliably pins against THIS scroll, at the cost of a second,
-	   separate scroll region rather than one unified with the rest of the
-	   screen. height: 100% is a no-op unless Bases' container happens to
-	   hand this a definite height (harmless either way); max-height: 100vh
-	   is what actually guarantees a bound, since nothing else here can be
-	   relied on to provide one. */
-	overflow: auto;
-	height: 100%;
-	max-height: 100vh;
+	/* No height cap: the base grows to fit its content and the outer pane
+	   scrolls it, rather than .ntn-root becoming its own bounded, separately
+	   scrolling box (the cost of that was a second, independent scroll
+	   region, and the header no longer reliably sticks to this element's own
+	   top — .ntn-th's `position: sticky` is left in place but simply won't
+	   have a scrolling ancestor of its own to pin against here). */
+	overflow: visible;
 	padding-bottom: 24px;
 }
 
