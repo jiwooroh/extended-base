@@ -5,6 +5,7 @@
  */
 import { App, BasesEntry, BasesPropertyId, BasesViewConfig, ListValue } from 'obsidian';
 import { PinnedColors, colorByName } from './colors';
+import { propBareName } from './property-types';
 
 /** Result of {@link computePillProps}. */
 export interface PillDetection {
@@ -12,11 +13,6 @@ export interface PillDetection {
 	pillProps: Set<BasesPropertyId>;
 	/** The subset whose values are lists (multi-select) rather than scalars. */
 	listProps: Set<BasesPropertyId>;
-}
-
-/** The bare property name without its `note.`/`file.`/`formula.` namespace. */
-function bareName(prop: BasesPropertyId): string {
-	return prop.split('.').slice(1).join('.');
 }
 
 /**
@@ -56,7 +52,7 @@ export function computePillProps(
 	}).metadataTypeManager;
 
 	for (const prop of props) {
-		const bare = bareName(prop).toLowerCase();
+		const bare = propBareName(prop).toLowerCase();
 		const display = config.getDisplayName(prop).toLowerCase();
 		const info = mtm?.getPropertyInfo?.(bare) as
 			| { type?: string; widget?: string }

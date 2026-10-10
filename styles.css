@@ -1566,6 +1566,14 @@
 	display: none;
 }
 
+/* Obsidian's own native frontmatter Properties widget also renders inside
+   the embedded editor by default — redundant (and inconsistently styled)
+   next to this card's own pill meta row above, which already shows the
+   same frontmatter. Hide it so the card body is just the note's text. */
+.ntn-feed-body .metadata-container {
+	display: none;
+}
+
 .ntn-feed-body .view-content {
 	padding: 0 !important;
 	height: auto !important;

@@ -320,6 +320,27 @@ Source layout:
 
 ## Changelog
 
+### 1.1.1
+
+- **Fixed:** an empty/absent property showed the literal text `null` in a
+  cell, instead of staying blank — and could show up as a spurious
+  `null` entry in a pill column's own list of known values. Bases
+  represents "no value" with a `NullValue` object (not plain
+  JavaScript `null`), whose `toString()` returns the string `"null"`;
+  every "is this value empty?" check here compared against JS
+  `null`/`undefined` only, so a `NullValue` slipped through and got
+  rendered as text. Now treated as empty everywhere a value's presence
+  gates rendering, inline-edit prefill, sorting, and the pill value
+  list.
+- **Fixed:** a scalar pill property (e.g. a `select`-typed `status` or
+  `priority`) didn't open the select editor on click in a base using
+  the legacy `type: bases` view declaration — it fell through to plain
+  text editing instead. That declaration hands properties to the view
+  already normalized to their bare name (no `note.` prefix), and
+  editability was decided with `prop.startsWith('note.')`, which a
+  prefix-less id never matches. Now editable unless a property is
+  explicitly `file.*` or `formula.*`.
+
 ### 1.1.0
 
 - **Added:** a fourth view, **Notion Feed** — a vertical feed of full note

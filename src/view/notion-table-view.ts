@@ -24,9 +24,9 @@ import { LOG_PREFIX, NOTION_TABLE_VIEW } from '../constants';
 import { PinnedColors, applyPillColor, colorByName, resolvePillColor, resolvePillOpacity } from '../lib/colors';
 import { PillDetection, computePillProps, parsePinnedColors, pillLabel, stripPath } from '../lib/pills';
 import { buildFolderGroups, buildGroupTree, countEntries, GroupNode, hideSoleTopLevelFolder, isGroupedByFolder } from '../lib/groups';
-import { getPropertyIcon, getPropertyMetaType } from '../lib/property-types';
+import { getPropertyIcon, getPropertyMetaType, isEditableProp, propBareName } from '../lib/property-types';
 import { renamePillValue } from '../lib/rename';
-import { valueToStrings } from '../lib/values';
+import { isNullish, valueToStrings } from '../lib/values';
 import { NotePageModal, OpenSelectOpts } from './note-modal';
 import { SelectEditor } from './select-editor';
 
@@ -477,9 +477,11 @@ export class NotionTableView extends BasesView {
 	private compareEntries(a: BasesEntry, b: BasesEntry, prop: BasesPropertyId): number {
 		const va = a.getValue(prop);
 		const vb = b.getValue(prop);
-		if (va == null && vb == null) return 0;
-		if (va == null) return -1;
-		if (vb == null) return 1;
+		const aNullish = isNullish(va);
+		const bNullish = isNullish(vb);
+		if (aNullish && bNullish) return 0;
+		if (aNullish) return -1;
+		if (bNullish) return 1;
 
 		if (this.pills.pillProps.has(prop)) {
 			const order = this.getSelectOrder(prop);
@@ -506,7 +508,7 @@ export class NotionTableView extends BasesView {
 
 	/** The user's saved option order for a select/pill property, or null if none is set. */
 	private getSelectOrder(prop: BasesPropertyId): string[] | null {
-		const bare = prop.split('.').slice(1).join('.');
+		const bare = propBareName(prop);
 		const order = this.getSelectOptionOrder(bare);
 		return order.length ? order : null;
 	}
@@ -632,8 +634,8 @@ export class NotionTableView extends BasesView {
 		}
 
 		const value = entry.getValue(prop);
-		const editable = prop.startsWith('note.');
-		const propName = prop.split('.').slice(1).join('.');
+		const editable = isEditableProp(prop);
+		const propName = propBareName(prop);
 
 		// ---- Pills (lists, tags, user-selected select-like properties) ----
 		if (this.pills.pillProps.has(prop)) {
@@ -675,7 +677,7 @@ export class NotionTableView extends BasesView {
 
 		// ---- Plain values: native render, click-to-edit for note.* ----
 		const cellEl = td.createDiv({ cls: 'ntn-cell' });
-		if (value != null) { // Handle both null and undefined
+		if (!isNullish(value)) {
 			const raw = value.toString();
 			// stripPath is for link/file paths only ("Folder/Note" -> "Note");
 			// applying it to freeform text truncates any value that happens to
@@ -696,7 +698,7 @@ export class NotionTableView extends BasesView {
 			td.addEventListener('click', (evt) => {
 				// Don't hijack clicks on links rendered inside the cell.
 				if ((evt.target as HTMLElement).closest('a')) return;
-				this.editCell(td, entry, propName, value ? value.toString() : '', kind);
+				this.editCell(td, entry, propName, isNullish(value) ? '' : value.toString(), kind);
 			});
 		}
 	}
