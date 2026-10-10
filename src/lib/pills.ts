@@ -65,7 +65,11 @@ export function computePillProps(
 		const metaType =
 			typeof info === 'string' ? info : info?.widget ?? info?.type;
 		let isList =
-			metaType === 'multitext' || metaType === 'tags' || metaType === 'aliases';
+			metaType === 'multitext' ||
+			metaType === 'tags' ||
+			metaType === 'aliases' ||
+			metaType === 'multiselect' ||
+			metaType === 'multi-select';
 		if (!isList) {
 			for (const entry of entries) {
 				if (entry.getValue(prop) instanceof ListValue) {
@@ -75,7 +79,11 @@ export function computePillProps(
 			}
 		}
 		if (isList) listProps.add(prop);
-		if (isList || bare === 'tags' || userSet.has(bare) || userSet.has(display)) {
+		// `select` (single-choice) is a widget type some property-editing
+		// plugins (e.g. Property Panels) register with metadataTypeManager —
+		// it's scalar, not a list, but still pill-worthy like tags/multitext.
+		const isSelect = metaType === 'select';
+		if (isList || isSelect || bare === 'tags' || userSet.has(bare) || userSet.has(display)) {
 			pillProps.add(prop);
 		}
 	}
