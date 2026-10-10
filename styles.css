@@ -14,7 +14,7 @@
 	--ntn-active: var(--background-modifier-active-hover, var(--background-modifier-hover));
 	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica,
 		Arial, sans-serif;
-	font-size: 14px;
+	font-size: var(--ntn-font-size, 14px);
 	color: var(--ntn-text);
 	background: var(--background-primary);
 	/* Sticky ought to pin against Bases' own outer scroller, so the header
@@ -271,7 +271,7 @@
 }
 
 .ntn-page-icon {
-	font-size: 14px;
+	font-size: var(--ntn-font-size, 14px);
 	flex-shrink: 0;
 	filter: grayscale(1);
 	opacity: 0.8;
@@ -352,7 +352,7 @@
 	max-width: 100%;
 	padding: 2px 6px;
 	border-radius: 3px;
-	font-size: 14px;
+	font-size: var(--ntn-font-size, 14px);
 	line-height: 120%;
 	white-space: nowrap;
 	overflow: hidden;
@@ -403,7 +403,7 @@
 .ntn-group-count {
 	margin-left: 8px;
 	color: var(--ntn-text-muted);
-	font-size: 12px;
+	font-size: calc(var(--ntn-font-size, 14px) * 0.857);
 }
 
 /* file.folder groups: a bold plain label, not a colored pill — a folder
@@ -411,7 +411,7 @@
    table's group-row label and the board's column header label. */
 .ntn-group-folder-label {
 	font-weight: 700;
-	font-size: 14px;
+	font-size: var(--ntn-font-size, 14px);
 	color: var(--ntn-text);
 }
 
@@ -420,7 +420,7 @@
    heading) instead of the plain label above. */
 .ntn-group-folder-pill {
 	font-weight: 700;
-	font-size: 14px;
+	font-size: var(--ntn-font-size, 14px);
 }
 
 /* ---------------- "+ New" footer ---------------- */
@@ -454,7 +454,7 @@
 }
 
 .ntn-cell .metadata-input-longtext {
-	font-size: 14px;
+	font-size: var(--ntn-font-size, 14px);
 }
 
 /* MarkdownRenderer wraps rendered text in a <p> (and lists/headings carry
@@ -509,7 +509,7 @@
 	border-radius: 4px;
 	padding: 6px 8px;
 	font-family: inherit;
-	font-size: 14px;
+	font-size: var(--ntn-font-size, 14px);
 	line-height: 1.5;
 	color: var(--ntn-text);
 }
@@ -587,14 +587,14 @@
 	outline: none;
 	background: transparent;
 	font-family: inherit;
-	font-size: 14px;
+	font-size: var(--ntn-font-size, 14px);
 	color: var(--ntn-text);
 	padding: 2px 0;
 }
 
 .ntn-select-hint {
 	padding: 6px 10px 2px;
-	font-size: 12px;
+	font-size: calc(var(--ntn-font-size, 14px) * 0.857);
 	color: var(--ntn-text-muted);
 	-webkit-user-select: none;
 	user-select: none;
@@ -623,7 +623,7 @@
 .ntn-select-check {
 	flex: 0 0 16px;
 	color: var(--ntn-text-muted);
-	font-size: 14px;
+	font-size: var(--ntn-font-size, 14px);
 	text-align: center;
 }
 
@@ -667,7 +667,7 @@
 .ntn-select-empty {
 	padding: 6px;
 	color: var(--ntn-text-muted);
-	font-size: 13px;
+	font-size: calc(var(--ntn-font-size, 14px) * 0.929);
 }
 
 /* Per-option color square (right of the label) — shows the value's current
@@ -719,7 +719,7 @@
 	padding: 5px 6px;
 	border-radius: 4px;
 	cursor: pointer;
-	font-size: 13px;
+	font-size: calc(var(--ntn-font-size, 14px) * 0.929);
 	color: var(--ntn-text);
 	text-transform: capitalize;
 	transition: background 20ms ease-in;
@@ -766,7 +766,7 @@
 	padding: 6px 8px;
 	margin-bottom: 6px;
 	font-family: inherit;
-	font-size: 13px;
+	font-size: calc(var(--ntn-font-size, 14px) * 0.929);
 	color: var(--ntn-text);
 }
 
@@ -887,7 +887,7 @@
    mode — see bug history #4). */
 .ntn-page-title.ntn-page-title {
 	margin: 0 0 12px;
-	font-size: 32px;
+	font-size: calc(var(--ntn-font-size, 14px) * 2.286);
 	font-weight: 700;
 	line-height: 1.2;
 	cursor: text;
@@ -911,7 +911,7 @@
 	min-height: 280px;
 	resize: none;
 	overflow: hidden;
-	font-size: 16px;
+	font-size: calc(var(--ntn-font-size, 14px) * 1.143);
 	line-height: 1.6;
 }
 
@@ -927,7 +927,7 @@
 	cursor: text;
 	min-height: 120px;
 	padding: 0;
-	font-size: 16px;
+	font-size: calc(var(--ntn-font-size, 14px) * 1.143);
 	line-height: 1.6;
 	color: var(--ntn-text);
 }
@@ -974,7 +974,7 @@
 	align-items: center;
 	gap: 8px;
 	min-height: 30px;
-	font-size: 14px;
+	font-size: var(--ntn-font-size, 14px);
 }
 
 .ntn-page-prop-name {
@@ -1257,7 +1257,7 @@
 	display: flex;
 	align-items: center;
 	font-weight: 600;
-	font-size: 12px;
+	font-size: calc(var(--ntn-font-size, 14px) * 0.857);
 	color: var(--ntn-text-muted);
 	margin-top: 8px;
 	padding-top: 8px;
@@ -1303,7 +1303,7 @@
 
 .ntn-board-card-title {
 	font-weight: 500;
-	font-size: 14px;
+	font-size: var(--ntn-font-size, 14px);
 }
 
 /* .ntn-title-text (shared with table/list) truncates to one line with an
@@ -1322,7 +1322,7 @@
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
-	font-size: 13px;
+	font-size: calc(var(--ntn-font-size, 14px) * 0.929);
 }
 
 .ntn-board-cell {
@@ -1393,7 +1393,7 @@
 	white-space: nowrap;
 	min-width: 0;
 	font-weight: 600;
-	font-size: 14px;
+	font-size: var(--ntn-font-size, 14px);
 	/* Inherit the pill's own fg color (set via applyPillColor) rather
 	   than a fixed one. */
 	color: inherit;
