@@ -538,6 +538,12 @@
 	max-width: 320px;
 	padding: 0;
 	overflow: hidden;
+	/* Override .ntn-root's `height: 100%; max-height: 100vh` (shared for its
+	   token vars) — without this the popover, fixed-positioned against the
+	   viewport, stretches to fill the full window height as an empty box
+	   below its actual content. */
+	height: auto;
+	max-height: min(400px, calc(100vh - 16px));
 }
 
 .ntn-select-current {
