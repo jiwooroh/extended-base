@@ -19,11 +19,13 @@ import {
 	MarkdownRenderer,
 } from 'obsidian';
 import { LOG_PREFIX, NOTION_BOARD_VIEW } from '../constants';
-import { NOTION_COLORS, PinnedColors, applyColorVars, applyPillColor, colorByName, resolvePillColor } from '../lib/colors';
+import { PinnedColors, applyPillColor, colorByName, resolvePillColor, resolvePillOpacity } from '../lib/colors';
 import { PillDetection, computePillProps, parsePinnedColors, stripPath } from '../lib/pills';
 import { buildFolderGroups, GroupNode, hideSoleTopLevelFolder, isGroupedByFolder } from '../lib/groups';
 import { getPropertyMetaType } from '../lib/property-types';
+import { renamePillValue } from '../lib/rename';
 import { valueToStrings } from '../lib/values';
+import { buildColorMenu } from './color-menu';
 import { NotePageModal, OpenSelectOpts } from './note-modal';
 import { SelectEditor } from './select-editor';
 
@@ -88,47 +90,30 @@ export class NotionBoardView extends BasesView {
 	}
 
 	/**
-	 * Open a Notion-palette color-swatch flyout anchored under `anchorEl`,
-	 * mirroring the select editor's own color picker (same markup/CSS
-	 * classes) so a board column header gets the identical picker. Picking
-	 * a color pins it for `fullKey` via the same pinnedColors mechanism the
-	 * pill select editor writes to.
+	 * Open the shared Notion-palette color + opacity picker anchored under
+	 * `anchorEl` — the same picker the pill select editor uses. Picking a
+	 * color or adjusting opacity pins it for `fullKey` via the same
+	 * pinnedColors mechanism the select editor writes to.
 	 */
 	private openColumnColorMenu(anchorEl: HTMLElement, fullKey: string): void {
 		this.closeColorMenu();
 		this.closeSelectMenu();
-		const menu = this.rootEl.doc.body.createDiv({ cls: 'ntn-root ntn-color-menu' });
-		this.colorMenuEl = menu;
-
-		const options = [{ name: 'default' }, ...NOTION_COLORS];
-		for (const c of options) {
-			const item = menu.createDiv({ cls: 'ntn-color-option' });
-			const swatch = item.createSpan({ cls: 'ntn-color-swatch' });
-			if (c.name !== 'default') {
-				applyColorVars(swatch, c as typeof NOTION_COLORS[0]);
-			}
-			item.createSpan({ cls: 'ntn-color-name', text: c.name.charAt(0).toUpperCase() + c.name.slice(1) });
-			item.addEventListener('click', (evt) => {
-				evt.stopPropagation();
-				this.setPinnedColor(fullKey, c.name);
+		this.colorMenuEl = buildColorMenu({
+			doc: this.rootEl.doc,
+			win: this.rootEl.win,
+			anchorEl,
+			currentOpacity: resolvePillOpacity(fullKey, this.pinnedColors),
+			onPick: (colorName) => {
+				this.setPinnedColor(fullKey, colorName);
 				this.closeColorMenu();
 				this.onDataUpdated();
-			});
-		}
-
-		// Position is fixed (set in CSS); anchor below the header, then
-		// nudge back on screen if that would overflow — same clamp the
-		// select editor's own color picker uses.
-		const anchorRect = anchorEl.getBoundingClientRect();
-		menu.setCssStyles({ left: `${anchorRect.left}px`, top: `${anchorRect.bottom + 4}px` });
-		const win = this.rootEl.win;
-		const menuRect = menu.getBoundingClientRect();
-		if (menuRect.bottom > win.innerHeight - 8) {
-			menu.setCssStyles({ top: `${Math.max(8, anchorRect.top - menuRect.height - 4)}px` });
-		}
-		if (menuRect.right > win.innerWidth - 8) {
-			menu.setCssStyles({ left: `${Math.max(8, win.innerWidth - menuRect.width - 8)}px` });
-		}
+			},
+			onOpacityChange: (opacity) => {
+				this.setPinnedOpacity(fullKey, opacity);
+				this.closeColorMenu();
+				this.onDataUpdated();
+			},
+		});
 	}
 
 
@@ -682,6 +667,9 @@ export class NotionBoardView extends BasesView {
 				void this.writeProperty(opts.file, opts.propName, value)
 					.then(() => opts.onWrite?.()),
 			setColor: (value, colorName) => this.setPinnedColor(value, colorName),
+			getOpacity: (value) => resolvePillOpacity(value, this.pinnedColors),
+			setOpacity: (value, opacity) => this.setPinnedOpacity(value, opacity),
+			renameOption: (oldValue, newValue) => this.renameOption(prop, opts.propName, oldValue, newValue),
 			getOrder: () => this.getSelectOptionOrder(opts.propName),
 			setOrder: (order) => this.setSelectOptionOrder(opts.propName, order),
 			onClose: () => { this.selectEditor = null; },
@@ -704,32 +692,63 @@ export class NotionBoardView extends BasesView {
 	/**
 	 * Pin a value to a specific Notion color. Updates the live map for instant
 	 * feedback in the open editor, then persists into the `pinnedColors` view
-	 * option (replacing any prior entry for the same value) so it survives
-	 * reloads and is editable from the view settings too.
+	 * option so it survives reloads and is editable from the view settings
+	 * too. Keeps whatever opacity the value already had pinned.
 	 */
 	private setPinnedColor(value: string, colorName: string): void {
-		const bare = value.replace(/^#/, '');
-		const key = bare.toLowerCase();
-		
+		const key = value.replace(/^#/, '').toLowerCase();
+
 		if (colorName === 'default') {
 			this.pinnedColors.delete(key);
 		} else {
 			const color = colorByName(colorName);
 			if (!color) return;
-			this.pinnedColors.set(key, color);
+			const opacity = this.pinnedColors.get(key)?.opacity ?? 100;
+			this.pinnedColors.set(key, { color, opacity });
 		}
 
-		const raw = this.config.get('pinnedColors');
-		const list = Array.isArray(raw) ? raw.map((s) => String(s)) : [];
-		const kept = list.filter((item) => {
-			const m = item.match(/^(.+?)\s*[=:]\s*(.+)$/);
-			return m ? m[1].trim().replace(/^#/, '').toLowerCase() !== key : true;
-		});
-		
-		if (colorName !== 'default') {
-			kept.push(`${bare}=${colorName}`);
+		this.persistPinnedColors();
+	}
+
+	/**
+	 * Set a value's pinned color's opacity. If the value isn't explicitly
+	 * pinned yet (still on its deterministic hash color), pins that color
+	 * first — opacity is a property of a pinned color, not of the value by
+	 * itself.
+	 */
+	private setPinnedOpacity(value: string, opacity: number): void {
+		const key = value.replace(/^#/, '').toLowerCase();
+		const color = this.pinnedColors.get(key)?.color ?? resolvePillColor(value, this.pinnedColors);
+		this.pinnedColors.set(key, { color, opacity: Math.max(0, Math.min(100, opacity)) });
+		this.persistPinnedColors();
+	}
+
+	/** Rewrite the `pinnedColors` view option from the live map. */
+	private persistPinnedColors(): void {
+		const list: string[] = [];
+		for (const [key, entry] of this.pinnedColors) {
+			list.push(entry.opacity === 100
+				? `${key}=${entry.color.name}`
+				: `${key}=${entry.color.name}:${entry.opacity}`);
 		}
-		this.config.set('pinnedColors', kept);
+		this.config.set('pinnedColors', list);
+	}
+
+	/**
+	 * Rename a value everywhere it's used: rewrites every note's
+	 * frontmatter that holds it, and carries over any pinned color/opacity
+	 * to the new key so the rename doesn't silently lose it.
+	 */
+	private renameOption(prop: BasesPropertyId, propName: string, oldValue: string, newValue: string): void {
+		const oldKey = oldValue.replace(/^#/, '').toLowerCase();
+		const newKey = newValue.replace(/^#/, '').toLowerCase();
+		const pinned = this.pinnedColors.get(oldKey);
+		if (pinned) {
+			this.pinnedColors.delete(oldKey);
+			this.pinnedColors.set(newKey, pinned);
+			this.persistPinnedColors();
+		}
+		void renamePillValue(this.app, this.data.data, prop, propName, oldValue, newValue);
 	}
 
 	private closeSelectMenu(): void {

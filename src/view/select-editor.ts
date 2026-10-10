@@ -11,7 +11,7 @@
  * view drives lifetime — outside-click and unload both call {@link close}.
  */
 import { BasesEntry, BasesPropertyId, TFile, setIcon } from 'obsidian';
-import { NOTION_COLORS, applyColorVars } from '../lib/colors';
+import { buildColorMenu } from './color-menu';
 import { valueToStrings } from '../lib/values';
 
 export interface SelectEditorDeps {
@@ -37,6 +37,15 @@ export interface SelectEditorDeps {
 	write: (value: unknown) => void;
 	/** Pin a value to a specific Notion color name (e.g. `"green"`). */
 	setColor: (value: string, colorName: string) => void;
+	/** Current opacity (0-100) for a value's pinned color. */
+	getOpacity: (value: string) => number;
+	/** Set a value's pinned color's opacity (0-100). */
+	setOpacity: (value: string, opacity: number) => void;
+	/**
+	 * Rename a value everywhere it's currently used — every note in the
+	 * result whose frontmatter holds it gets rewritten to the new value.
+	 */
+	renameOption: (oldValue: string, newValue: string) => void;
 	/**
 	 * The user's saved option order for this property (lowercased value
 	 * keys), most-significant first. Drives both the order options list in
@@ -288,10 +297,15 @@ export class SelectEditor {
 			const isSelected = this.selected.some((s) => s.toLowerCase() === o.toLowerCase());
 			row.createSpan({ cls: 'ntn-select-check', text: isSelected ? '✓' : '' });
 
-			// 2. Pill (middle)
+			// 2. Pill (middle) — double-click to rename the value everywhere
+			// it's currently used.
 			const pill = row.createSpan({ cls: 'ntn-pill' });
 			this.deps.applyColor(pill, o);
 			pill.setText(o.split('/').pop() || '');
+			pill.addEventListener('dblclick', (evt) => {
+				evt.stopPropagation();
+				this.startRenameOption(pill, o);
+			});
 
 			// 3. Color square (right)
 			const colorBtn = row.createSpan({
@@ -347,40 +361,89 @@ export class SelectEditor {
 		}
 	}
 
-	/** Open the color picker for a value, anchored to its row button. */
+	/**
+	 * Swap an option row's pill for an inline input; Enter/blur commits a
+	 * rename of that value across every note in the result that currently
+	 * has it (via `deps.renameOption`), Esc cancels. Updates the local
+	 * known/order/selected state immediately for instant feedback, while
+	 * the actual frontmatter rewrites happen in the background.
+	 */
+	private startRenameOption(pill: HTMLElement, oldValue: string): void {
+		if (pill.querySelector('.ntn-input')) return; // already renaming
+		const rect = pill.getBoundingClientRect();
+		pill.empty();
+		const input = pill.createEl('input', { type: 'text', cls: 'ntn-input' });
+		input.setCssStyles({ width: `${Math.max(rect.width, 80)}px` });
+		input.value = oldValue;
+		input.addEventListener('click', (evt) => evt.stopPropagation());
+		input.focus();
+		input.select();
+
+		let committed = false;
+		const commit = () => {
+			if (committed) return;
+			committed = true;
+			const newValue = input.value.trim();
+			if (!newValue || newValue === oldValue) {
+				this.renderOptions();
+				return;
+			}
+			const oldKey = oldValue.toLowerCase();
+			const newKey = newValue.toLowerCase();
+			this.known.delete(oldKey);
+			this.known.set(newKey, newValue);
+			this.orderKeys = this.orderKeys.map((k) => (k === oldKey ? newKey : k));
+			this.selected = this.selected.map((s) => (s.toLowerCase() === oldKey ? newValue : s));
+			this.deps.renameOption(oldValue, newValue);
+			this.renderPills();
+			this.renderOptions();
+		};
+		input.addEventListener('keydown', (ev: Event) => {
+			const evt = ev as KeyboardEvent;
+			if (evt.key === 'Enter') {
+				evt.preventDefault();
+				commit();
+			} else if (evt.key === 'Escape') {
+				committed = true; // suppress blur commit
+				this.renderOptions();
+			}
+		});
+		input.addEventListener('blur', commit);
+	}
+
+	/** Open the color + opacity picker for a value, anchored to its row button. */
 	private openColorMenu(anchorEl: HTMLElement, value: string): void {
 		this.closeColorMenu();
-		const menu = this.deps.doc.body.createDiv({ cls: 'ntn-root ntn-color-menu' });
-		this.colorMenu = menu;
-
-		const options = [{ name: 'default' }, ...NOTION_COLORS];
-		for (const c of options) {
-			const item = menu.createDiv({ cls: 'ntn-color-option' });
-			const swatch = item.createSpan({ cls: 'ntn-color-swatch' });
-			// "Default" leaves the swatch on the stylesheet's neutral colors,
-			// which already track light/dark — only real palette entries
-			// override them.
-			if (c.name !== 'default') {
-				applyColorVars(swatch, c as typeof NOTION_COLORS[0]);
-			}
-			item.createSpan({ cls: 'ntn-color-name', text: c.name.charAt(0).toUpperCase() + c.name.slice(1) });
-			item.addEventListener('click', (evt) => {
-				evt.stopPropagation();
-				this.deps.setColor(value, c.name);
+		this.colorMenu = buildColorMenu({
+			doc: this.deps.doc,
+			win: this.deps.win,
+			anchorEl,
+			currentOpacity: this.deps.getOpacity(value),
+			onPick: (colorName) => {
+				this.deps.setColor(value, colorName);
 				// Live map is updated synchronously, so re-rendering shows the
 				// new color immediately (renderOptions also closes this flyout).
 				this.renderPills();
 				this.renderOptions();
-			});
-		}
-
-		this.clampToWindow(menu, anchorEl.getBoundingClientRect());
+			},
+			onOpacityChange: (opacity) => {
+				this.deps.setOpacity(value, opacity);
+				this.renderPills();
+				this.renderOptions();
+			},
+		});
 	}
 
 	/** Anchor the main menu below the cell, then clamp into the window. */
 	private position(): void {
 		const rect = this.deps.anchor.getBoundingClientRect();
-		this.menu.setCssStyles({ minWidth: `${Math.max(rect.width, 220)}px` });
+		// Capped at 320 (the stylesheet's own max-width for this menu): an
+		// inline min-width wider than that would win over the CSS max-width
+		// when the two conflict, so an anomalously wide anchor cell (seen
+		// with some list/tag columns) could otherwise balloon the menu to
+		// match it instead of staying a compact dropdown.
+		const width = Math.min(Math.max(rect.width, 220), 320);
+		this.menu.setCssStyles({ minWidth: `${width}px` });
 		this.clampToWindow(this.menu, rect);
 	}
 

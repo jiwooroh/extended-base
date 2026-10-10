@@ -21,10 +21,11 @@ import {
 	setIcon,
 } from 'obsidian';
 import { LOG_PREFIX, NOTION_TABLE_VIEW } from '../constants';
-import { PinnedColors, applyPillColor, colorByName } from '../lib/colors';
+import { PinnedColors, applyPillColor, colorByName, resolvePillColor, resolvePillOpacity } from '../lib/colors';
 import { PillDetection, computePillProps, parsePinnedColors, stripPath } from '../lib/pills';
 import { buildFolderGroups, buildGroupTree, countEntries, GroupNode, hideSoleTopLevelFolder, isGroupedByFolder } from '../lib/groups';
 import { getPropertyIcon, getPropertyMetaType } from '../lib/property-types';
+import { renamePillValue } from '../lib/rename';
 import { valueToStrings } from '../lib/values';
 import { NotePageModal, OpenSelectOpts } from './note-modal';
 import { SelectEditor } from './select-editor';
@@ -931,6 +932,9 @@ export class NotionTableView extends BasesView {
 				void this.writeProperty(opts.file, opts.propName, value)
 					.then(() => opts.onWrite?.()),
 			setColor: (value, colorName) => this.setPinnedColor(value, colorName),
+			getOpacity: (value) => resolvePillOpacity(value, this.pinnedColors),
+			setOpacity: (value, opacity) => this.setPinnedOpacity(value, opacity),
+			renameOption: (oldValue, newValue) => this.renameOption(prop, opts.propName, oldValue, newValue),
 			getOrder: () => this.getSelectOptionOrder(opts.propName),
 			setOrder: (order) => this.setSelectOptionOrder(opts.propName, order),
 			onClose: () => { this.selectEditor = null; },
@@ -953,32 +957,63 @@ export class NotionTableView extends BasesView {
 	/**
 	 * Pin a value to a specific Notion color. Updates the live map for instant
 	 * feedback in the open editor, then persists into the `pinnedColors` view
-	 * option (replacing any prior entry for the same value) so it survives
-	 * reloads and is editable from the view settings too.
+	 * option so it survives reloads and is editable from the view settings
+	 * too. Keeps whatever opacity the value already had pinned.
 	 */
 	private setPinnedColor(value: string, colorName: string): void {
-		const bare = value.replace(/^#/, '');
-		const key = bare.toLowerCase();
-		
+		const key = value.replace(/^#/, '').toLowerCase();
+
 		if (colorName === 'default') {
 			this.pinnedColors.delete(key);
 		} else {
 			const color = colorByName(colorName);
 			if (!color) return;
-			this.pinnedColors.set(key, color);
+			const opacity = this.pinnedColors.get(key)?.opacity ?? 100;
+			this.pinnedColors.set(key, { color, opacity });
 		}
 
-		const raw = this.config.get('pinnedColors');
-		const list = Array.isArray(raw) ? raw.map((s) => String(s)) : [];
-		const kept = list.filter((item) => {
-			const m = item.match(/^(.+?)\s*[=:]\s*(.+)$/);
-			return m ? m[1].trim().replace(/^#/, '').toLowerCase() !== key : true;
-		});
-		
-		if (colorName !== 'default') {
-			kept.push(`${bare}=${colorName}`);
+		this.persistPinnedColors();
+	}
+
+	/**
+	 * Set a value's pinned color's opacity. If the value isn't explicitly
+	 * pinned yet (still on its deterministic hash color), pins that color
+	 * first — opacity is a property of a pinned color, not of the value by
+	 * itself.
+	 */
+	private setPinnedOpacity(value: string, opacity: number): void {
+		const key = value.replace(/^#/, '').toLowerCase();
+		const color = this.pinnedColors.get(key)?.color ?? resolvePillColor(value, this.pinnedColors);
+		this.pinnedColors.set(key, { color, opacity: Math.max(0, Math.min(100, opacity)) });
+		this.persistPinnedColors();
+	}
+
+	/** Rewrite the `pinnedColors` view option from the live map. */
+	private persistPinnedColors(): void {
+		const list: string[] = [];
+		for (const [key, entry] of this.pinnedColors) {
+			list.push(entry.opacity === 100
+				? `${key}=${entry.color.name}`
+				: `${key}=${entry.color.name}:${entry.opacity}`);
 		}
-		this.config.set('pinnedColors', kept);
+		this.config.set('pinnedColors', list);
+	}
+
+	/**
+	 * Rename a value everywhere it's used: rewrites every note's
+	 * frontmatter that holds it, and carries over any pinned color/opacity
+	 * to the new key so the rename doesn't silently lose it.
+	 */
+	private renameOption(prop: BasesPropertyId, propName: string, oldValue: string, newValue: string): void {
+		const oldKey = oldValue.replace(/^#/, '').toLowerCase();
+		const newKey = newValue.replace(/^#/, '').toLowerCase();
+		const pinned = this.pinnedColors.get(oldKey);
+		if (pinned) {
+			this.pinnedColors.delete(oldKey);
+			this.pinnedColors.set(newKey, pinned);
+			this.persistPinnedColors();
+		}
+		void renamePillValue(this.app, this.data.data, prop, propName, oldValue, newValue);
 	}
 
 	private closeSelectMenu(): void {
