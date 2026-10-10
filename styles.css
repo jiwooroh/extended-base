@@ -677,7 +677,9 @@
 }
 
 /* Per-option edit (pencil) button — same rename as double-clicking the pill.
-   Hidden until the row is hovered, like the drag handle. */
+   Always visible (unlike the drag handle) so renaming is discoverable;
+   margin-left: auto pushes it (and the color button after it) to the far
+   right of the row, next to each other. */
 .ntn-select-edit-btn {
 	flex: 0 0 auto;
 	display: flex;
@@ -688,7 +690,7 @@
 	margin-left: auto;
 	color: var(--ntn-text-muted);
 	cursor: pointer;
-	opacity: 0;
+	opacity: 0.6;
 }
 
 .ntn-select-edit-btn svg {
@@ -696,12 +698,9 @@
 	height: 12px;
 }
 
-.ntn-select-option:hover .ntn-select-edit-btn {
-	opacity: 0.6;
-}
-
 .ntn-select-edit-btn:hover {
 	opacity: 1;
+	color: var(--ntn-text);
 }
 
 /* Per-option color square (right of the label) — shows the value's current
