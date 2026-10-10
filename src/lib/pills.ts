@@ -91,6 +91,16 @@ export function computePillProps(
 	return { pillProps, listProps };
 }
 
+/**
+ * Display text for a pill value: strips only a leading `#` (tag syntax).
+ * Unlike {@link stripPath} (for link/file-path values in plain cells), a
+ * pill shows its value in full, including any `/` — a select option
+ * legitimately named "A/B" reads as "A/B", not truncated down to "B".
+ */
+export function pillLabel(raw: string): string {
+	return raw.replace(/^#/, '');
+}
+
 /** Parse the `pinnedColors` view option (`value=color` entries) into a map. */
 export function stripPath(str: string): string {
 	if (!str || typeof str !== 'string') return str;

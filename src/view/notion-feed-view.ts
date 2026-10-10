@@ -22,7 +22,7 @@ import {
 } from 'obsidian';
 import { LOG_PREFIX, NOTION_FEED_VIEW } from '../constants';
 import { PinnedColors, applyPillColor, colorByName, resolvePillColor, resolvePillOpacity } from '../lib/colors';
-import { PillDetection, computePillProps, parsePinnedColors } from '../lib/pills';
+import { PillDetection, computePillProps, parsePinnedColors, pillLabel } from '../lib/pills';
 import { buildFolderGroups, buildGroupTree, countEntries, GroupNode, hideSoleTopLevelFolder, isGroupedByFolder } from '../lib/groups';
 import { renamePillValue } from '../lib/rename';
 import { valueToStrings } from '../lib/values';
@@ -217,7 +217,7 @@ export class NotionFeedView extends BasesView {
 		for (const item of items) {
 			const pill = cell.createSpan({ cls: 'ntn-pill' });
 			this.applyPillColor(pill, item, useDefaultColor);
-			pill.setText(item.replace(/^#/, '').split('/').pop() || '');
+			pill.setText(pillLabel(item));
 		}
 		if (editable) {
 			cell.addClass('ntn-editable');
