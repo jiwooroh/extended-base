@@ -670,13 +670,40 @@
 	font-size: 13px;
 }
 
+/* Per-option edit (pencil) button — same rename as double-clicking the pill.
+   Hidden until the row is hovered, like the drag handle. */
+.ntn-select-edit-btn {
+	flex: 0 0 auto;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 16px;
+	height: 16px;
+	margin-left: auto;
+	color: var(--ntn-text-muted);
+	cursor: pointer;
+	opacity: 0;
+}
+
+.ntn-select-edit-btn svg {
+	width: 12px;
+	height: 12px;
+}
+
+.ntn-select-option:hover .ntn-select-edit-btn {
+	opacity: 0.6;
+}
+
+.ntn-select-edit-btn:hover {
+	opacity: 1;
+}
+
 /* Per-option color square (right of the label) — shows the value's current
    color; click to change. */
 .ntn-select-color-btn {
 	flex: 0 0 auto;
 	width: 16px;
 	height: 16px;
-	margin-left: auto;
 	border-radius: 4px;
 	cursor: pointer;
 	background: var(--ntn-pill-bg-light, #EBECED);

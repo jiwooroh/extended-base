@@ -307,7 +307,18 @@ export class SelectEditor {
 				this.startRenameOption(pill, o);
 			});
 
-			// 3. Color square (right)
+			// 3. Edit (pencil) — same rename as double-clicking the pill.
+			const editBtn = row.createSpan({
+				cls: 'ntn-select-edit-btn',
+				attr: { 'aria-label': 'Rename' },
+			});
+			setIcon(editBtn, 'pencil');
+			editBtn.addEventListener('click', (evt) => {
+				evt.stopPropagation();
+				this.startRenameOption(pill, o);
+			});
+
+			// 4. Color square (right)
 			const colorBtn = row.createSpan({
 				cls: 'ntn-select-color-btn',
 				attr: { 'aria-label': 'Change color' },
