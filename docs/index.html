@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Extended Base — Notion-style views for Obsidian Bases</title>
-<meta name="description" content="A free, open-source Obsidian plugin that renders your Bases as Notion-style table, list, and board views: colored pills, inline editing, nested groups.">
+<meta name="description" content="A free, open-source Obsidian plugin that renders your Bases as Notion-style table, list, board, and feed views: colored pills, inline editing, nested groups.">
 <meta property="og:title" content="Extended Base — Notion-style views for Obsidian Bases">
-<meta property="og:description" content="A free, open-source Obsidian plugin that renders your Bases as Notion-style table, list, and board views: colored pills, inline editing, nested groups.">
+<meta property="og:description" content="A free, open-source Obsidian plugin that renders your Bases as Notion-style table, list, board, and feed views: colored pills, inline editing, nested groups.">
 <meta property="og:image" content="https://lucytheboss.github.io/extended-base/asset/intro.webp">
 <meta property="og:url" content="https://lucytheboss.github.io/extended-base/">
 <meta property="og:type" content="website">
@@ -32,10 +32,10 @@
 		<p class="tagline">
 			<strong>Extended Base</strong> is a free, open-source plugin that
 			renders your Obsidian Bases as Notion-style databases — a
-			<strong>table</strong>, a <strong>list</strong>, and a
-			<strong>board</strong>, with clean chrome, colored pills, hover
-			actions, and inline editing. Your notes stay yours; only the look
-			changes.
+			<strong>table</strong>, a <strong>list</strong>, a
+			<strong>board</strong>, and a <strong>feed</strong>, with clean
+			chrome, colored pills, hover actions, and inline editing. Your
+			notes stay yours; only the look changes.
 		</p>
 		<div class="cta">
 			<a class="btn primary" href="#install">Install</a>
@@ -45,8 +45,8 @@
 	</div>
 
 	<section id="views">
-		<h2>The three views</h2>
-		<p class="prereq">Pick one from the base's view selector. All three
+		<h2>The four views</h2>
+		<p class="prereq">Pick one from the base's view selector. All four
 			share the same pill colors, select editor, inline editing, and page
 			panel.</p>
 		<div class="features">
@@ -74,6 +74,14 @@
 				<strong>Hide group</strong>. Ungrouped notes collect under
 				<strong>No Status</strong>.</p>
 			</div>
+			<div class="card">
+				<span class="pill orange">Feed</span>
+				<h3>Notion Feed</h3>
+				<p>A vertical feed of full note cards — title, colored pill
+				properties, and the note's own body shown right in the card.
+				The body isn't a preview; it's the note's own live editor,
+				embedded directly, so you can read and edit in place.</p>
+			</div>
 		</div>
 	</section>
 
@@ -90,11 +98,13 @@
 			<div class="card">
 				<span class="pill green">Pills</span>
 				<h3>Colored value pills</h3>
-				<p>Tags and list properties render with Notion's 9-color
-				palette. A deterministic hash keeps each value's color stable
-				forever — or recolor any value yourself with the built-in
-				color picker, including a <strong>Default</strong> (no color)
-				entry.</p>
+				<p>Tags, list properties, and single-choice <code>select</code>
+				properties render with Notion's 9-color palette, always
+				showing their full value. A deterministic hash keeps each
+				value's color stable forever — or recolor any value yourself
+				with the built-in color picker, including a
+				<strong>Default</strong> (no color) entry. A pencil icon next
+				to the color button renames a value everywhere it's used.</p>
 			</div>
 			<div class="card">
 				<span class="pill yellow">Editing</span>
@@ -143,6 +153,8 @@
 		<h2>Demo</h2>
 		<img class="shot" src="asset/demo.gif" alt="Scrolling through a long table">
 		<p class="caption">Scrolling through a long table.</p>
+		<img class="shot" src="asset/feed_view.png" alt="A Notion Feed card with a live-editable note body">
+		<p class="caption">Notion Feed — the note body is a live, directly-editable embedded editor, not a preview.</p>
 	</section>
 
 	<section id="changelog">
@@ -151,8 +163,45 @@
 
 			<details class="release" open>
 				<summary>
-					<span class="ver">1.0.9</span>
+					<span class="ver">1.1.0</span>
 					<span class="tag">Latest</span>
+				</summary>
+				<div class="body">
+					<ul>
+						<li>Added: a fourth view, <strong>Notion Feed</strong> — a
+							vertical feed of full note cards (title, colored pill
+							properties, and the note's body), styled consistently with
+							the other three views and sharing their pill/color/grouping
+							code. The body is the note's own live editor embedded
+							directly in the card, not a read-only preview.</li>
+						<li>Added: <code>select</code> (single-choice) properties are
+							now auto-detected as pill columns, the same way
+							<code>tags</code>/<code>multitext</code>/<code>aliases</code>
+							already were.</li>
+						<li>Added: a pencil icon next to a pill's color button in the
+							select editor — click it (or still double-click the pill)
+							to rename that value everywhere it's used.</li>
+						<li>Changed: a pill always shows its full value now, <code>/</code>
+							included — a select option named <code>A/B</code> used to
+							display as just <code>B</code>. Group headers are
+							unaffected: a <code>Work/Client/Alpha</code> grouping still
+							shows one level per header.</li>
+						<li>Removed: the base's own scroll region and sticky table
+							header. The view no longer caps its own height
+							(<code>height: 100%; max-height: 100vh</code>, added in
+							1.0.7) — it grows to its natural content height and the
+							surrounding pane scrolls it. The tradeoff: the table header
+							no longer stays pinned to the top while you scroll past it.</li>
+						<li>Fixed: the pill select menu could, in rare cases, stretch
+							to fill the entire window height as a mostly-empty box below
+							its actual (much shorter) content.</li>
+					</ul>
+				</div>
+			</details>
+
+			<details class="release">
+				<summary>
+					<span class="ver">1.0.9</span>
 				</summary>
 				<div class="body">
 					<ul>
@@ -450,8 +499,8 @@
 			<li>Search for <strong>Extended Base</strong>, then click
 				<strong>Install</strong> and <strong>Enable</strong>.</li>
 			<li>In any Base, open the view selector and pick
-				<strong>Notion Table</strong>, <strong>Notion List</strong>, or
-				<strong>Notion Board</strong>.</li>
+				<strong>Notion Table</strong>, <strong>Notion List</strong>,
+				<strong>Notion Board</strong>, or <strong>Notion Feed</strong>.</li>
 		</ol>
 		<h3><span class="pill green">2</span> Manual install from the repository</h3>
 		<ol class="steps">
@@ -461,7 +510,7 @@
 			<li>Put them in <code>VaultRoot/.obsidian/plugins/extended-base/</code>.</li>
 			<li>Reload Obsidian and enable <strong>Extended Base</strong> in
 				<strong>Settings → Community plugins</strong>.</li>
-			<li>In any Base, open the view selector and pick one of the three
+			<li>In any Base, open the view selector and pick one of the four
 				views.</li>
 		</ol>
 	</section>
@@ -476,8 +525,8 @@
 				<strong><a href="https://github.com/FrancescoUmberto/GoodBases">GoodBases</a></strong>
 				by <strong>Umberto Francesco Carolini</strong>, released under the
 				MIT license. The Notion-style table, colored pills, select editor,
-				and page panel are their work; this fork adds the List and Board
-				views, nested groups, and the column controls.
+				and page panel are their work; this fork adds the List, Board, and
+				Feed views, nested groups, and the column controls.
 			</p>
 			<p>If GoodBases is useful to you, you can support the original author
 				with a coffee.</p>
