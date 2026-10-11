@@ -163,8 +163,38 @@
 
 			<details class="release" open>
 				<summary>
-					<span class="ver">1.1.1</span>
+					<span class="ver">1.1.2</span>
 					<span class="tag">Latest</span>
+				</summary>
+				<div class="body">
+					<ul>
+						<li>Changed: the title icon's only source is now a frontmatter
+							property — the page-emoji/Obsidian-file-icon/custom-icon modes
+							are gone, since Obsidian has no per-file custom icon of its own.
+							The one real source is a plugin like
+							<a href="https://github.com/FlorianWoelki/obsidian-iconize">Iconize</a>
+							configured to sync icons to frontmatter. A note with nothing set
+							there gets a plain document icon. <strong>Show title icon</strong>
+							(on/off) and <strong>Icon property</strong> (the frontmatter key,
+							default <code>icon</code>) are what's left, shared by all four
+							views.</li>
+						<li>Fixed: the title icon was vertically centered against the
+							title text, which only looks right for a single line — a
+							wrapped multi-line title (the board view wraps on purpose; the
+							table and list can too) centered the icon against the whole
+							block instead of its first line. Now top-aligned everywhere.</li>
+						<li>Fixed: an empty board card still claimed its container's
+							full spacing gap against the title above it — the properties
+							section is now skipped entirely, not left empty, when every
+							property is empty. Card padding and line spacing are also
+							tighter.</li>
+					</ul>
+				</div>
+			</details>
+
+			<details class="release">
+				<summary>
+					<span class="ver">1.1.1</span>
 				</summary>
 				<div class="body">
 					<ul>

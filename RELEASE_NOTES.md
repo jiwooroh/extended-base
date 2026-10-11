@@ -1,87 +1,45 @@
-# Extended Base 1.1.1
+# Extended Base 1.1.2
 
-A fourth view — **Notion Feed** — plus a round of pill, layout, and
-empty-value fixes.
+Title icons now come from one real source, and line up the way they should.
 
-## 🆕 Notion Feed
+## 🖼️ Title icons: Iconize only
 
-A vertical feed of full note cards: title, colored pill properties, and
-the note's own body right there in the card — not a read-only preview,
-but the note's own live editor embedded directly, so you can read and
-edit in place without opening anything else.
+The title icon's only source is now a frontmatter property. The earlier
+modes — Notion's page emoji, a generic Obsidian-style file icon, a fixed
+custom icon — are gone, because Obsidian has no per-file custom icon of
+its own to offer. The one real source is a plugin like
+[Iconize](https://github.com/FlorianWoelki/obsidian-iconize) configured
+to sync each note's sidebar icon to frontmatter — so that's the only
+mode now:
 
-![A Notion Feed card with a live-editable note body](docs/asset/feed_view.png)
+- **Show title icon** — on/off, shared by all four views.
+- **Icon property** — the frontmatter key each note's icon lives in
+  (default `icon`, matching Iconize's own default).
 
-Pick **Notion Feed** from the base's view selector, same as the other
-three. It shares the same pill colors, select editor, and folder/property
-grouping as the rest of the plugin. A *Card count limit* view option
-(default 5) caps how many cards render at once, since each one carries a
-full embedded editor.
+A note with nothing set in that property gets a plain document icon —
+the same default Iconize itself shows for a file with no icon assigned.
 
-## 🖊️ Pill rename, now easy to find
+## 🐛 Fixes
 
-A pencil icon now sits next to a pill's color button in the select
-editor — click it to rename that value everywhere it's currently used.
-(Double-clicking the pill still works too; the pencil just makes the
-feature discoverable instead of hidden behind a gesture.)
-
-![Renaming a value from the select editor](docs/asset/rename_pencil.png)
-
-## 🐛 Empty cells no longer show the text "null"
-
-A property with no value used to render the literal text `null` instead
-of staying blank — and could even show up as a spurious `null` entry in
-a pill column's own list of known values.
-
-Bases represents "no value" with a `NullValue` object, not plain
-JavaScript `null`; that object's `toString()` returns the string
-`"null"`, and every "is this value empty?" check in this plugin only
-compared against JS `null`/`undefined`. Fixed everywhere a value's
-presence gates rendering, inline-edit prefill, sorting, and the pill
-value list.
-
-## 🐛 Scalar pills now open the select editor in `type: bases` views
-
-Clicking a scalar pill property (e.g. a `select`-typed `status` or
-`priority`) used to fall through to plain text editing instead of
-opening the select menu, in a base using the legacy `type: bases` view
-declaration. That declaration hands properties to the view already
-normalized to their bare name (no `note.` prefix), and editability was
-decided with `prop.startsWith('note.')`, which a prefix-less id never
-matches. A property is now editable unless it's explicitly `file.*` or
-`formula.*`.
-
-## 🔧 Also in this release
-
-- **A pill now always shows its full value.** A select option named
-  `A/B` used to render as just `B` — the same last-segment stripping
-  that group headers use for `/`-nested tag paths was being applied to
-  every pill's own label too. Group headers are unchanged: a
-  `Work/Client/Alpha` grouping still shows one level per header.
-- **`select`-type properties are now recognized as pill columns.** Some
-  property-editing plugins (e.g. Property Panels) register a `select`
-  widget type for single-choice properties; cells for those weren't
-  being picked up as pills at all, so clicking one opened Obsidian's own
-  built-in list editor instead of this plugin's menu.
-- **The select menu no longer occasionally fills the whole window
-  height** as a mostly-empty box below its actual (much shorter)
-  content.
-- **A Notion Feed card's embedded editor no longer shows Obsidian's
-  native Properties list** above the body — redundant next to the
-  card's own pill meta row, and now hidden.
-
-## ⚠️ Known tradeoff: sticky table header is gone
-
-The view no longer bounds its own height and scrolls internally
-(`height: 100%; max-height: 100vh` on the view root, added in 1.0.7) — it
-now grows to its natural content height and the surrounding pane scrolls
-it, like any other content, instead of creating a second, separate
-scrollbar. The cost: the table's column headers no longer stay pinned to
-the top while you scroll past them.
+- **Title icon top-alignment, everywhere.** The icon was vertically
+  centered against the title text, which only looks right for a single
+  line. A title that wraps onto several lines — the board view wraps on
+  purpose; the table and list can too, with *Wrap all content* on or
+  just a narrow column — centered the icon against the whole wrapped
+  block instead of sitting next to its first line. This was fixed for
+  the board view last release but not the table/list; now top-aligned
+  everywhere.
+- **Board cards are tighter.** An empty card's properties section still
+  claimed its container's full spacing gap against the title above it
+  even with nothing inside — it's now skipped entirely, not just left
+  empty, when every property is empty for that card. Card padding and
+  line spacing are also tighter.
 
 ## Upgrading
 
-Drop-in — no config or `.base` file changes needed. See
-[Installation](README.md#installation) if you're installing fresh.
+Drop-in — no config or `.base` file changes needed. If you were using
+the old page-emoji/theme/custom title icon modes, they're gone: set up
+Iconize's frontmatter sync (or just leave *Show title icon* on and get
+the plain document icon) instead.
 
 See the [full changelog](README.md#changelog) for the complete history.

@@ -178,6 +178,12 @@ then opens the panel instead of a tab (Ctrl/Cmd-click still opens a tab):
 - **Theme-aware chrome** — text, borders, hover states, and the view's own
   background all come from Obsidian's active theme, so Extended Base
   matches whatever theme (not just light/dark mode) you have installed.
+- **Title icons** — every title shows an icon, sourced from a frontmatter
+  property (the *Icon property* view option, default `icon`) that a
+  per-file icon plugin like [Iconize](https://github.com/FlorianWoelki/obsidian-iconize)
+  can be configured to sync each note's sidebar icon into. A note with
+  nothing set there gets a plain document icon instead. Turn it off
+  entirely with the *Show title icon* option.
 - **Colored pills** — list properties (tags, multitext) and single-choice
   `select` properties render as pills using Notion's 9-color palette, with
   accurate light- and dark-mode values. Colors are assigned by a
@@ -233,6 +239,8 @@ then opens the panel instead of a tab (Ctrl/Cmd-click still opens a tab):
 | Column width (Small/Medium/Large) | | | ✅ | |
 | Show group color as (Off/Label/Background/Both) | | | ✅ | |
 | Open notes in | ✅ | ✅ | ✅ | ✅ |
+| Show title icon | ✅ | ✅ | ✅ | ✅ |
+| Icon property | ✅ | ✅ | ✅ | ✅ |
 | Hidden groups | | | ✅ | |
 | Properties to show as colored pills | ✅ | ✅ | ✅ | ✅ |
 | Pinned pill colors | ✅ | ✅ | ✅ | ✅ |
@@ -319,6 +327,30 @@ Source layout:
 - ⚪️ **Gallery view** — card galleries with cover images.
 
 ## Changelog
+
+### 1.1.2
+
+- **Changed:** the title icon's only source is now a frontmatter
+  property — the `titleIcon`/`titleIconCustom` options (Notion page
+  emoji, Obsidian-style generic file icon, a fixed custom icon) are
+  gone. Obsidian has no per-file custom icon of its own; the one real
+  source is a plugin like [Iconize](https://github.com/FlorianWoelki/obsidian-iconize)
+  configured to sync icons to frontmatter, so that's the only mode now.
+  A note with nothing set in that property still gets a plain document
+  icon. *Show title icon* (on/off) and *Icon property* (the frontmatter
+  key, default `icon`) are what's left, shared by all four views as
+  before.
+- **Fixed:** the title icon was vertically centered against the title
+  text, which only reads correctly for a single line — a title that
+  wraps onto several lines (the board view wraps on purpose; the table
+  and list can too, with *Wrap all content* on or just a narrow column)
+  centered the icon against the whole wrapped block instead of sitting
+  next to its first line. Now top-aligned everywhere.
+- **Fixed:** an empty board card still claimed its container's full
+  `gap` against the title above it even with nothing inside — the
+  properties section is now skipped entirely, not just left empty, when
+  every property is empty for that card. Card padding and line spacing
+  are also tighter.
 
 ### 1.1.1
 
