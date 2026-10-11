@@ -1357,11 +1357,11 @@
 	background: var(--background-primary);
 	border: 1px solid var(--ntn-border);
 	border-radius: 6px;
-	padding: 10px;
+	padding: 8px;
 	box-shadow: rgba(15, 15, 15, 0.05) 0 1px 2px;
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
+	gap: 6px;
 	cursor: pointer;
 	transition: background 20ms ease-in;
 }
@@ -1389,6 +1389,18 @@
 	text-overflow: clip;
 	overflow-wrap: break-word;
 	word-break: break-word;
+}
+
+/* .ntn-title-wrap (shared) centers its icon against a single line of
+   text — right for a table/list cell, but a wrapped multi-line board
+   title would center the icon against the whole wrapped block instead
+   of sitting next to its first line. Align both to the top instead. */
+.ntn-board-card-title .ntn-title-wrap {
+	align-items: flex-start;
+}
+
+.ntn-board-card-title .ntn-page-icon {
+	margin-top: 2px;
 }
 
 .ntn-board-card-props {
