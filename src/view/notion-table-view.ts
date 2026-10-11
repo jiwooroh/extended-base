@@ -52,7 +52,7 @@ export class NotionTableView extends BasesView {
 	/** User-pinned value → color overrides from the `pinnedColors` view option. */
 	private pinnedColors: PinnedColors = new Map();
 	/** How a note's title icon renders (the `titleIcon`/`titleIconCustom` view options). */
-	private titleIconCfg: TitleIconConfig = { mode: 'page', custom: '', property: 'icon' };
+	private titleIconCfg: TitleIconConfig = { show: true, mode: 'page', custom: '', property: 'icon' };
 	/** Set of group full keys that are currently collapsed. */
 	private collapsedGroups = new Set<string>();
 	/** The open select editor, if any (also drives outside-click detection). */

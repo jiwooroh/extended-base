@@ -2,12 +2,18 @@
 import { BasesAllOptions, BasesViewConfig } from 'obsidian';
 
 /**
- * The `titleIcon`/`titleIconCustom`/`titleIconProperty` options, shared by
- * all four views so a note's title icon is configured the same way
- * everywhere. Spread into each view's option list.
+ * The `showTitleIcon`/`titleIcon`/`titleIconCustom`/`titleIconProperty`
+ * options, shared by all four views so a note's title icon is configured
+ * the same way everywhere. Spread into each view's option list.
  */
 function titleIconOptions(): BasesAllOptions[] {
 	return [
+		{
+			type: 'toggle',
+			key: 'showTitleIcon',
+			displayName: 'Show title icon',
+			default: true,
+		},
 		{
 			type: 'dropdown',
 			key: 'titleIcon',
@@ -18,7 +24,6 @@ function titleIconOptions(): BasesAllOptions[] {
 				theme: "Obsidian's file icon",
 				custom: 'Custom (set below)',
 				property: 'From a note property (set below)',
-				none: 'Hidden',
 			},
 		},
 		{

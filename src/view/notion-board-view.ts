@@ -51,7 +51,7 @@ export class NotionBoardView extends BasesView {
 	/** User-pinned value → color overrides from the `pinnedColors` view option. */
 	private pinnedColors: PinnedColors = new Map();
 	/** How a note's title icon renders (the `titleIcon`/`titleIconCustom` view options). */
-	private titleIconCfg: TitleIconConfig = { mode: 'page', custom: '', property: 'icon' };
+	private titleIconCfg: TitleIconConfig = { show: true, mode: 'page', custom: '', property: 'icon' };
 	/** The open select editor, if any (also drives outside-click detection). */
 	private selectEditor: SelectEditor | null = null;
 	/** Set of subgroup full keys (nested folders within a column) that are currently collapsed. */
