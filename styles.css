@@ -267,9 +267,15 @@
 
 .ntn-title-text {
 	font-weight: 500;
-	/* A border rather than text-decoration-* longhands, which Obsidian's
-	   supported browser baseline only partially implements. */
-	border-bottom: 1px solid rgba(55, 53, 47, 0.16);
+	/* A real text-decoration underline (like a hyperlink) rather than a
+	   border — a border draws one flat line under the whole box, so a
+	   title shorter than its container (or one that wraps, in the board
+	   view) reads as a line under empty space instead of under the text
+	   itself. text-decoration hugs the glyphs exactly like link text does. */
+	text-decoration: underline;
+	text-decoration-color: rgba(55, 53, 47, 0.16);
+	text-decoration-thickness: 1px;
+	text-underline-offset: 2px;
 	cursor: pointer;
 	white-space: nowrap;
 	overflow: hidden;
@@ -279,7 +285,7 @@
 }
 
 .theme-dark .ntn-title-text {
-	border-bottom-color: rgba(255, 255, 255, 0.14);
+	text-decoration-color: rgba(255, 255, 255, 0.14);
 }
 
 /* Hover-reveal OPEN button — absolutely anchored so it can never

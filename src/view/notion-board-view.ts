@@ -342,9 +342,25 @@ export class NotionBoardView extends BasesView {
 		const propsWrap = cardEl.createDiv({ cls: 'ntn-board-card-props' });
 		for (const prop of props) {
 			if (prop === 'file.name') continue;
+			if (this.isCellEmpty(entry, prop)) continue;
 			const cellWrap = propsWrap.createDiv({ cls: 'ntn-board-cell' });
 			this.renderCell(cellWrap, entry, prop);
 		}
+	}
+
+	/**
+	 * Whether a property has nothing to show for this entry — an empty-list
+	 * pill, or a nullish plain value. A card otherwise grows one full row
+	 * taller per *configured* property regardless of whether this note
+	 * actually has anything in it, which with many columns stacked up a lot
+	 * of dead vertical space. A checkbox is never "empty": unchecked is a
+	 * real, meaningful value, not an absent one.
+	 */
+	private isCellEmpty(entry: BasesEntry, prop: BasesPropertyId): boolean {
+		const value = entry.getValue(prop);
+		if (this.pills.pillProps.has(prop)) return valueToStrings(value).length === 0;
+		if (value instanceof BooleanValue) return false;
+		return isNullish(value);
 	}
 
 	private renderCell(td: HTMLElement, entry: BasesEntry, prop: BasesPropertyId): void {
