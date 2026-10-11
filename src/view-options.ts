@@ -2,9 +2,12 @@
 import { BasesAllOptions, BasesViewConfig } from 'obsidian';
 
 /**
- * The `showTitleIcon`/`titleIcon`/`titleIconCustom`/`titleIconProperty`
- * options, shared by all four views so a note's title icon is configured
- * the same way everywhere. Spread into each view's option list.
+ * The `showTitleIcon`/`titleIconProperty` options, shared by all four views
+ * so a note's title icon is configured the same way everywhere. The only
+ * icon source is a frontmatter property (what a per-file icon plugin like
+ * Iconize, synced to frontmatter, actually sets) — there's no other mode,
+ * since Obsidian itself has no per-file custom icon of its own to offer.
+ * Spread into each view's option list.
  */
 function titleIconOptions(): BasesAllOptions[] {
 	return [
@@ -15,26 +18,9 @@ function titleIconOptions(): BasesAllOptions[] {
 			default: true,
 		},
 		{
-			type: 'dropdown',
-			key: 'titleIcon',
-			displayName: 'Title icon',
-			default: 'page',
-			options: {
-				page: 'Page icon 📄',
-				theme: "Obsidian's file icon",
-				custom: 'Custom (set below)',
-				property: 'From a note property (set below)',
-			},
-		},
-		{
-			type: 'text',
-			key: 'titleIconCustom',
-			displayName: 'Custom title icon — an emoji, or a Lucide icon name like file-text',
-		},
-		{
 			type: 'text',
 			key: 'titleIconProperty',
-			displayName: "Icon property — e.g. icon, the frontmatter key a plugin like Iconize's \"sync to frontmatter\" option writes each note's sidebar icon to",
+			displayName: "Icon property — e.g. icon, the frontmatter key a plugin like Iconize's \"sync to frontmatter\" option writes each note's sidebar icon to. A note with nothing set there gets a plain document icon.",
 			default: 'icon',
 		},
 	];

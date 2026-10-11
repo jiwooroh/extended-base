@@ -251,7 +251,11 @@
 
 .ntn-title-wrap {
 	display: flex;
-	align-items: center;
+	/* Top-aligned, not centered: a centered icon looks fine against a
+	   single line, but drifts to the middle of the whole block once the
+	   title wraps onto several lines (long titles, or the board view,
+	   which wraps titles on purpose) instead of sitting by its first line. */
+	align-items: flex-start;
 	gap: 6px;
 	position: relative;
 	min-width: 0;
@@ -262,13 +266,10 @@
 	font-size: 14px;
 	flex-shrink: 0;
 	opacity: 0.8;
-}
-
-/* Notion's own page emoji is desaturated so it sits quietly beside the
-   title. An emoji the USER chose keeps its colors — hence the class rather
-   than putting grayscale on .ntn-page-icon itself. */
-.ntn-page-icon-emoji {
-	filter: grayscale(1);
+	/* Optical nudge for top-aligned .ntn-title-wrap: without it the icon's
+	   own box sits a hair above the text's cap-height instead of reading
+	   as flush with the first line. */
+	margin-top: 2px;
 }
 
 /* Obsidian's icon set takes the current text color, so it follows whatever
@@ -1377,6 +1378,7 @@
 .ntn-board-card-title {
 	font-weight: 500;
 	font-size: 14px;
+	line-height: 1.3;
 }
 
 /* .ntn-title-text (shared with table/list) truncates to one line with an
@@ -1389,18 +1391,6 @@
 	text-overflow: clip;
 	overflow-wrap: break-word;
 	word-break: break-word;
-}
-
-/* .ntn-title-wrap (shared) centers its icon against a single line of
-   text — right for a table/list cell, but a wrapped multi-line board
-   title would center the icon against the whole wrapped block instead
-   of sitting next to its first line. Align both to the top instead. */
-.ntn-board-card-title .ntn-title-wrap {
-	align-items: flex-start;
-}
-
-.ntn-board-card-title .ntn-page-icon {
-	margin-top: 2px;
 }
 
 .ntn-board-card-props {

@@ -51,7 +51,7 @@ export class NotionBoardView extends BasesView {
 	/** User-pinned value → color overrides from the `pinnedColors` view option. */
 	private pinnedColors: PinnedColors = new Map();
 	/** How a note's title icon renders (the `titleIcon`/`titleIconCustom` view options). */
-	private titleIconCfg: TitleIconConfig = { show: true, mode: 'page', custom: '', property: 'icon' };
+	private titleIconCfg: TitleIconConfig = { show: true, property: 'icon' };
 	/** The open select editor, if any (also drives outside-click detection). */
 	private selectEditor: SelectEditor | null = null;
 	/** Set of subgroup full keys (nested folders within a column) that are currently collapsed. */
@@ -338,15 +338,18 @@ export class NotionBoardView extends BasesView {
 		props: BasesPropertyId[],
 	): void {
 		const cardEl = container.createDiv({ cls: 'ntn-board-card' });
-		
+
 		// Title is always first
 		const titleWrap = cardEl.createDiv({ cls: 'ntn-board-card-title' });
 		this.renderCell(titleWrap, entry, 'file.name');
-		
+
+		// Skipped entirely (not just left empty) when nothing qualifies —
+		// an empty-but-present flex child still claims .ntn-board-card's own
+		// `gap` between it and the title above, padding the card for nothing.
+		const visibleProps = props.filter((prop) => prop !== 'file.name' && !this.isCellEmpty(entry, prop));
+		if (!visibleProps.length) return;
 		const propsWrap = cardEl.createDiv({ cls: 'ntn-board-card-props' });
-		for (const prop of props) {
-			if (prop === 'file.name') continue;
-			if (this.isCellEmpty(entry, prop)) continue;
+		for (const prop of visibleProps) {
 			const cellWrap = propsWrap.createDiv({ cls: 'ntn-board-cell' });
 			this.renderCell(cellWrap, entry, prop);
 		}
