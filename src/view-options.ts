@@ -2,6 +2,33 @@
 import { BasesAllOptions, BasesViewConfig } from 'obsidian';
 
 /**
+ * The `titleIcon`/`titleIconCustom` options, shared by all four views so a
+ * note's title icon is configured the same way everywhere. Spread into each
+ * view's option list.
+ */
+function titleIconOptions(): BasesAllOptions[] {
+	return [
+		{
+			type: 'dropdown',
+			key: 'titleIcon',
+			displayName: 'Title icon',
+			default: 'page',
+			options: {
+				page: 'Page icon 📄',
+				theme: "Obsidian's file icon",
+				custom: 'Custom (set below)',
+				none: 'Hidden',
+			},
+		},
+		{
+			type: 'text',
+			key: 'titleIconCustom',
+			displayName: 'Custom title icon — an emoji, or a Lucide icon name like file-text',
+		},
+	];
+}
+
+/**
  * Build the option descriptors Obsidian renders in the view's settings.
  * Read the values back at render time with `this.config.get(key)`.
  */
@@ -29,6 +56,7 @@ export function buildViewOptions(_config: BasesViewConfig): BasesAllOptions[] {
 				panel: 'Page panel',
 			},
 		},
+		...titleIconOptions(),
 		{
 			type: 'multitext',
 			key: 'pillProperties',
@@ -60,6 +88,7 @@ export function buildListViewOptions(_config: BasesViewConfig): BasesAllOptions[
 				panel: 'Page panel',
 			},
 		},
+		...titleIconOptions(),
 		{
 			type: 'multitext',
 			key: 'pillProperties',
@@ -91,6 +120,7 @@ export function buildFeedViewOptions(_config: BasesViewConfig): BasesAllOptions[
 				panel: 'Page panel',
 			},
 		},
+		...titleIconOptions(),
 		{
 			type: 'multitext',
 			key: 'pillProperties',
@@ -144,6 +174,7 @@ export function buildBoardViewOptions(_config: BasesViewConfig): BasesAllOptions
 				panel: 'Page panel',
 			},
 		},
+		...titleIconOptions(),
 		{
 			type: 'multitext',
 			key: 'pillProperties',

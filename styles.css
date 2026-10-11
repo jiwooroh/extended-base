@@ -261,8 +261,27 @@
 .ntn-page-icon {
 	font-size: 14px;
 	flex-shrink: 0;
-	filter: grayscale(1);
 	opacity: 0.8;
+}
+
+/* Notion's own page emoji is desaturated so it sits quietly beside the
+   title. An emoji the USER chose keeps its colors — hence the class rather
+   than putting grayscale on .ntn-page-icon itself. */
+.ntn-page-icon-emoji {
+	filter: grayscale(1);
+}
+
+/* Obsidian's icon set takes the current text color, so it follows whatever
+   theme is active instead of being a fixed glyph. */
+.ntn-page-icon-lucide {
+	display: inline-flex;
+	align-items: center;
+	color: var(--ntn-text-muted);
+}
+
+.ntn-page-icon-lucide svg {
+	width: 15px;
+	height: 15px;
 }
 
 .ntn-title-text {
@@ -1518,8 +1537,16 @@
 	padding: 16px 20px 8px;
 }
 
+.ntn-feed-title-wrap {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	min-width: 0;
+}
+
 .ntn-feed-title {
 	display: block;
+	min-width: 0;
 	font-size: 18px;
 	font-weight: 700;
 	color: var(--ntn-text);

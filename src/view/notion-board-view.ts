@@ -24,6 +24,7 @@ import { PillDetection, computePillProps, parsePinnedColors, pillLabel, stripPat
 import { buildFolderGroups, GroupNode, hideSoleTopLevelFolder, isGroupedByFolder } from '../lib/groups';
 import { getPropertyMetaType, isEditableProp, propBareName } from '../lib/property-types';
 import { renamePillValue } from '../lib/rename';
+import { TitleIconConfig, readTitleIconConfig, renderTitleIcon } from '../lib/title-icon';
 import { isNullish, valueToStrings } from '../lib/values';
 import { buildColorMenu } from './color-menu';
 import { NotePageModal, OpenSelectOpts } from './note-modal';
@@ -49,6 +50,8 @@ export class NotionBoardView extends BasesView {
 	private pills: PillDetection = { pillProps: new Set(), listProps: new Set() };
 	/** User-pinned value → color overrides from the `pinnedColors` view option. */
 	private pinnedColors: PinnedColors = new Map();
+	/** How a note's title icon renders (the `titleIcon`/`titleIconCustom` view options). */
+	private titleIconCfg: TitleIconConfig = { mode: 'page', custom: '' };
 	/** The open select editor, if any (also drives outside-click detection). */
 	private selectEditor: SelectEditor | null = null;
 	/** Set of subgroup full keys (nested folders within a column) that are currently collapsed. */
@@ -131,6 +134,7 @@ export class NotionBoardView extends BasesView {
 		const props = this.config.getOrder();
 		this.pills = computePillProps(props, this.data.data, this.config, this.app);
 		this.pinnedColors = parsePinnedColors(this.config.get('pinnedColors'));
+		this.titleIconCfg = readTitleIconConfig(this.config);
 
 		const boardContainer = root.createDiv({ cls: 'ntn-board-container' });
 
@@ -368,6 +372,7 @@ export class NotionBoardView extends BasesView {
 			td.addClass('ntn-col-title'); // Inherit some styling like min-width
 			
 			const titleWrap = td.createDiv({ cls: 'ntn-title-wrap' });
+			renderTitleIcon(titleWrap, this.titleIconCfg);
 
 			const link = titleWrap.createSpan({ text: entry.file.basename, cls: 'ntn-title-text' });
 			link.addEventListener('click', (evt) => {

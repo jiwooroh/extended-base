@@ -23,6 +23,7 @@ import { PillDetection, computePillProps, parsePinnedColors, pillLabel, stripPat
 import { buildFolderGroups, buildGroupTree, countEntries, GroupNode, hideSoleTopLevelFolder, isGroupedByFolder } from '../lib/groups';
 import { getPropertyMetaType, isEditableProp, propBareName } from '../lib/property-types';
 import { renamePillValue } from '../lib/rename';
+import { TitleIconConfig, readTitleIconConfig, renderTitleIcon } from '../lib/title-icon';
 import { isNullish, valueToStrings } from '../lib/values';
 import { NotePageModal, OpenSelectOpts } from './note-modal';
 import { SelectEditor } from './select-editor';
@@ -47,6 +48,8 @@ export class NotionListView extends BasesView {
 	private pills: PillDetection = { pillProps: new Set(), listProps: new Set() };
 	/** User-pinned value → color overrides from the `pinnedColors` view option. */
 	private pinnedColors: PinnedColors = new Map();
+	/** How a note's title icon renders (the `titleIcon`/`titleIconCustom` view options). */
+	private titleIconCfg: TitleIconConfig = { mode: 'page', custom: '' };
 	/** Set of group full keys that are currently collapsed. */
 	private collapsedGroups = new Set<string>();
 	/** The open select editor, if any (also drives outside-click detection). */
@@ -89,6 +92,7 @@ export class NotionListView extends BasesView {
 		const props = this.config.getOrder();
 		this.pills = computePillProps(props, this.data.data, this.config, this.app);
 		this.pinnedColors = parsePinnedColors(this.config.get('pinnedColors'));
+		this.titleIconCfg = readTitleIconConfig(this.config);
 
 		const listContainer = root.createDiv({ cls: 'ntn-list-container' });
 
@@ -204,6 +208,7 @@ export class NotionListView extends BasesView {
 			td.addClass('ntn-col-title'); // Inherit some styling like min-width
 			
 			const titleWrap = td.createDiv({ cls: 'ntn-title-wrap' });
+			renderTitleIcon(titleWrap, this.titleIconCfg);
 
 			const link = titleWrap.createSpan({ text: entry.file.basename, cls: 'ntn-title-text' });
 			link.addEventListener('click', (evt) => {
