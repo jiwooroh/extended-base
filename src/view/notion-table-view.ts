@@ -52,7 +52,7 @@ export class NotionTableView extends BasesView {
 	/** User-pinned value → color overrides from the `pinnedColors` view option. */
 	private pinnedColors: PinnedColors = new Map();
 	/** How a note's title icon renders (the `titleIcon`/`titleIconCustom` view options). */
-	private titleIconCfg: TitleIconConfig = { mode: 'page', custom: '' };
+	private titleIconCfg: TitleIconConfig = { mode: 'page', custom: '', property: 'icon' };
 	/** Set of group full keys that are currently collapsed. */
 	private collapsedGroups = new Set<string>();
 	/** The open select editor, if any (also drives outside-click detection). */
@@ -623,7 +623,7 @@ export class NotionTableView extends BasesView {
 			td.addClass('ntn-col-title'); // Inherit some styling like min-width
 			
 			const titleWrap = td.createDiv({ cls: 'ntn-title-wrap' });
-			renderTitleIcon(titleWrap, this.titleIconCfg);
+			renderTitleIcon(titleWrap, this.titleIconCfg, entry);
 
 			const link = titleWrap.createSpan({ text: entry.file.basename, cls: 'ntn-title-text' });
 			link.addEventListener('click', (evt) => {

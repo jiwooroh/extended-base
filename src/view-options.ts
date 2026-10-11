@@ -2,9 +2,9 @@
 import { BasesAllOptions, BasesViewConfig } from 'obsidian';
 
 /**
- * The `titleIcon`/`titleIconCustom` options, shared by all four views so a
- * note's title icon is configured the same way everywhere. Spread into each
- * view's option list.
+ * The `titleIcon`/`titleIconCustom`/`titleIconProperty` options, shared by
+ * all four views so a note's title icon is configured the same way
+ * everywhere. Spread into each view's option list.
  */
 function titleIconOptions(): BasesAllOptions[] {
 	return [
@@ -17,6 +17,7 @@ function titleIconOptions(): BasesAllOptions[] {
 				page: 'Page icon 📄',
 				theme: "Obsidian's file icon",
 				custom: 'Custom (set below)',
+				property: 'From a note property (set below)',
 				none: 'Hidden',
 			},
 		},
@@ -24,6 +25,12 @@ function titleIconOptions(): BasesAllOptions[] {
 			type: 'text',
 			key: 'titleIconCustom',
 			displayName: 'Custom title icon — an emoji, or a Lucide icon name like file-text',
+		},
+		{
+			type: 'text',
+			key: 'titleIconProperty',
+			displayName: "Icon property — e.g. icon, the frontmatter key a plugin like Iconize's \"sync to frontmatter\" option writes each note's sidebar icon to",
+			default: 'icon',
 		},
 	];
 }

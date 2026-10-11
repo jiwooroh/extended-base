@@ -59,7 +59,7 @@ export class NotionFeedView extends BasesView {
 	/** User-pinned value → color overrides from the `pinnedColors` view option. */
 	private pinnedColors: PinnedColors = new Map();
 	/** How a note's title icon renders (the `titleIcon`/`titleIconCustom` view options). */
-	private titleIconCfg: TitleIconConfig = { mode: 'page', custom: '' };
+	private titleIconCfg: TitleIconConfig = { mode: 'page', custom: '', property: 'icon' };
 	/** Set of group full keys that are currently collapsed. */
 	private collapsedGroups = new Set<string>();
 	/** The open select editor, if any (also drives outside-click detection). */
@@ -183,7 +183,7 @@ export class NotionFeedView extends BasesView {
 
 		const header = card.createDiv({ cls: 'ntn-feed-header' });
 		const titleWrap = header.createDiv({ cls: 'ntn-feed-title-wrap' });
-		renderTitleIcon(titleWrap, this.titleIconCfg);
+		renderTitleIcon(titleWrap, this.titleIconCfg, entry);
 		const title = titleWrap.createEl('a', {
 			cls: 'ntn-feed-title',
 			text: entry.file.basename,
