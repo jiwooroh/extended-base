@@ -179,6 +179,38 @@ export class NotionTableView extends BasesView {
 								this.config.set('disableColorColumns', newDisable);
 							});
 					});
+
+					// Single- vs multi-select: defaults to whatever computePillProps
+					// auto-detected from the data (see its own doc comment), but can
+					// be pinned either way from here regardless of that detection.
+					menu.addSeparator();
+					const isMultiNow = this.pills.listProps.has(prop);
+					const setSelectType = (value: 'select' | 'multiselect' | null) => {
+						const overrides = { ...(this.config.get('selectTypeOverride') as Record<string, string> || {}) };
+						if (value === null) delete overrides[prop];
+						else overrides[prop] = value;
+						this.config.set('selectTypeOverride', overrides);
+					};
+					menu.addItem((item) => {
+						item.setTitle('Select (single)')
+							.setIcon('circle')
+							.setChecked(!isMultiNow)
+							.onClick(() => setSelectType('select'));
+					});
+					menu.addItem((item) => {
+						item.setTitle('Multi-select')
+							.setIcon('list')
+							.setChecked(isMultiNow)
+							.onClick(() => setSelectType('multiselect'));
+					});
+					const overrides = this.config.get('selectTypeOverride') as Record<string, string> || {};
+					if (prop in overrides) {
+						menu.addItem((item) => {
+							item.setTitle('Auto-detect select type')
+								.setIcon('sparkles')
+								.onClick(() => setSelectType(null));
+						});
+					}
 				}
 
 				menu.showAtMouseEvent(e);

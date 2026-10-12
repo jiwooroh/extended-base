@@ -36,7 +36,14 @@ The full database grid.
   original property name is untouched; only the display name changes.
 - **Per-column right-click menu** — **Change icon** (a searchable Lucide
   icon picker) and **Change property name**, plus toggling text wrapping
-  and (for pill columns) turning off automatic pill colors.
+  and (for pill columns) turning off automatic pill colors and switching
+  between **Select (single)** and **Multi-select**. Left as **Auto**
+  (the default), a pill column picks single- or multi-select from the
+  data itself: multi-select once some entry actually holds more than one
+  value for it, single-select otherwise — so a property nobody's used as
+  a real list yet (every entry has zero or one value) starts out
+  single-select rather than defaulting to multi just because its
+  frontmatter type is list-shaped.
 - **Property-type icons** — each header shows an icon matching the
   property's type (text, number, checkbox, date, tags), or whatever icon
   you've picked for it.
@@ -246,8 +253,9 @@ then opens the panel instead of a tab (Ctrl/Cmd-click still opens a tab):
 | Pinned pill colors | ✅ | ✅ | ✅ | ✅ |
 
 Column widths, order, sort, icons, renamed headers, per-column wrapping,
-and per-column color toggles are all set directly on the table (drag /
-click / double-click / right-click) and persist in the view config.
+per-column color toggles, and per-column select-type overrides are all set
+directly on the table (drag / click / double-click / right-click) and
+persist in the view config.
 
 Notes on editing:
 
@@ -327,6 +335,20 @@ Source layout:
 - ⚪️ **Gallery view** — card galleries with cover images.
 
 ## Changelog
+
+### 1.2.0
+
+- **Added:** the table view's per-column right-click menu can now pin a
+  pill column's select type — **Select (single)** or **Multi-select**
+  — overriding whatever it would otherwise auto-detect. **Auto-detect
+  select type** clears the override.
+- **Changed:** a pill column's auto-detected select type (when no
+  override is set) now comes from the data itself — multi-select once
+  some entry actually holds more than one value for it, single-select
+  otherwise — instead of always defaulting to multi-select just because
+  its vault-level frontmatter type (`tags`, `multitext`, …) is
+  list-shaped. A freshly-created list property with at most one value
+  per note now starts single-select.
 
 ### 1.1.2
 

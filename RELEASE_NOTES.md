@@ -1,45 +1,35 @@
-# Extended Base 1.1.2
+# Extended Base 1.2.0
 
-Title icons now come from one real source, and line up the way they should.
+Pill columns can now be pinned to single- or multi-select, and the
+auto-detected default is smarter about which one fits.
 
-## 🖼️ Title icons: Iconize only
+## 🆕 Select vs. Multi-select, your choice
 
-The title icon's only source is now a frontmatter property. The earlier
-modes — Notion's page emoji, a generic Obsidian-style file icon, a fixed
-custom icon — are gone, because Obsidian has no per-file custom icon of
-its own to offer. The one real source is a plugin like
-[Iconize](https://github.com/FlorianWoelki/obsidian-iconize) configured
-to sync each note's sidebar icon to frontmatter — so that's the only
-mode now:
+Right-click a pill column's header in the table view for two new
+options:
 
-- **Show title icon** — on/off, shared by all four views.
-- **Icon property** — the frontmatter key each note's icon lives in
-  (default `icon`, matching Iconize's own default).
+- **Select (single)** — pick one value, select-and-close.
+- **Multi-select** — toggle multiple values, menu stays open.
+- **Auto-detect select type** (once you've overridden it) — clears the
+  override and goes back to automatic.
 
-A note with nothing set in that property gets a plain document icon —
-the same default Iconize itself shows for a file with no icon assigned.
+## 🧠 Smarter auto-detection
 
-## 🐛 Fixes
-
-- **Title icon top-alignment, everywhere.** The icon was vertically
-  centered against the title text, which only looks right for a single
-  line. A title that wraps onto several lines — the board view wraps on
-  purpose; the table and list can too, with *Wrap all content* on or
-  just a narrow column — centered the icon against the whole wrapped
-  block instead of sitting next to its first line. This was fixed for
-  the board view last release but not the table/list; now top-aligned
-  everywhere.
-- **Board cards are tighter.** An empty card's properties section still
-  claimed its container's full spacing gap against the title above it
-  even with nothing inside — it's now skipped entirely, not just left
-  empty, when every property is empty for that card. Card padding and
-  line spacing are also tighter.
+Without an override, a pill column now decides single- vs multi-select
+from the data itself: **multi-select once some entry actually holds
+more than one value for it, single-select otherwise.** Previously, any
+property whose vault-level frontmatter type was list-shaped (`tags`,
+`multitext`, …) always defaulted to multi-select, even if every note
+only ever had zero or one value in it. A freshly-created list property
+now starts single-select until a note actually uses it as a real list —
+and you can always pin it either way yourself.
 
 ## Upgrading
 
-Drop-in — no config or `.base` file changes needed. If you were using
-the old page-emoji/theme/custom title icon modes, they're gone: set up
-Iconize's frontmatter sync (or just leave *Show title icon* on and get
-the plain document icon) instead.
+Drop-in — no config or `.base` file changes needed. Existing pill
+columns keep working exactly as before unless their auto-detected
+default actually changes (only ones where no entry currently has more
+than one value switch from multi- to single-select) — right-click and
+pin **Multi-select** if you'd rather keep one as-is.
 
 See the [full changelog](README.md#changelog) for the complete history.

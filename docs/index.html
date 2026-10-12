@@ -163,8 +163,31 @@
 
 			<details class="release" open>
 				<summary>
-					<span class="ver">1.1.2</span>
+					<span class="ver">1.2.0</span>
 					<span class="tag">Latest</span>
+				</summary>
+				<div class="body">
+					<ul>
+						<li>Added: the table view's per-column right-click menu can now
+							pin a pill column's select type — <strong>Select (single)</strong>
+							or <strong>Multi-select</strong> — overriding whatever it would
+							otherwise auto-detect. <strong>Auto-detect select type</strong>
+							clears the override.</li>
+						<li>Changed: a pill column's auto-detected select type (when no
+							override is set) now comes from the data itself — multi-select
+							once some entry actually holds more than one value for it,
+							single-select otherwise — instead of always defaulting to
+							multi-select just because its vault-level frontmatter type
+							(<code>tags</code>, <code>multitext</code>, …) is list-shaped. A
+							freshly-created list property with at most one value per note
+							now starts single-select.</li>
+					</ul>
+				</div>
+			</details>
+
+			<details class="release">
+				<summary>
+					<span class="ver">1.1.2</span>
 				</summary>
 				<div class="body">
 					<ul>
