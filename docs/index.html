@@ -181,6 +181,14 @@
 							(<code>tags</code>, <code>multitext</code>, …) is list-shaped. A
 							freshly-created list property with at most one value per note
 							now starts single-select.</li>
+						<li>Fixed: grouping by an ordinary property whose value happened
+							to contain <code>/</code> (e.g. a category like
+							<code>01_Robots/AI/digital</code>) split it into a nested tree
+							of sub-groups — one level per <code>/</code>-separated segment —
+							the same treatment meant for real <code>file.folder</code>
+							hierarchy. Grouping by anything other than <code>file.folder</code>
+							is flat again: a value is one group, <code>/</code> included,
+							exactly as it reads.</li>
 					</ul>
 				</div>
 			</details>

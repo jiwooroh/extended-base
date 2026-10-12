@@ -118,13 +118,11 @@ properties, and the note's own body shown directly in the card.
 
 ## Nested & folder groups
 
-Group by a property whose values use `/` as a separator and Extended Base
-builds a real tree instead of a flat list. `Work/Client/Alpha` becomes
-three nested levels, each with its own collapsible header (labeled with
-just that level's own segment) and a count of everything beneath it.
-Click **▼** / **▶** on any header to fold it. This only affects *group
-headers* — an ordinary pill (in a cell, the select editor, a feed card's
-meta row) always shows its full value, `/` included.
+Grouping by an ordinary property is flat: each distinct value is its own
+group, shown exactly as it reads — a value containing `/` (e.g. a
+category like `01_Robots/AI/digital`) is one group, not split into a
+tree of sub-groups. Nesting is reserved for real hierarchy — see
+*Grouping by `file.folder`* below.
 
 **Grouping by `file.folder` gets a dedicated layout**, since Bases
 produces one flat group per folder and a folder path isn't really a tag.
@@ -349,6 +347,12 @@ Source layout:
   its vault-level frontmatter type (`tags`, `multitext`, …) is
   list-shaped. A freshly-created list property with at most one value
   per note now starts single-select.
+- **Fixed:** grouping by an ordinary property whose value happened to
+  contain `/` (e.g. a category like `01_Robots/AI/digital`) split it
+  into a nested tree of sub-groups — one level per `/`-separated
+  segment — the same treatment meant for real `file.folder` hierarchy.
+  Grouping by anything other than `file.folder` is flat again: a value
+  is one group, `/` included, exactly as it reads.
 
 ### 1.1.2
 
