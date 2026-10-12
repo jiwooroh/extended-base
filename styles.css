@@ -1405,6 +1405,11 @@
 	align-items: center;
 }
 
+.ntn-board-card .ntn-cell.ntn-cell,
+.ntn-board-card .ntn-cell.ntn-cell * {
+	overflow-wrap: anywhere;
+}
+
 .ntn-board-column-new {
 	display: flex;
 	align-items: center;

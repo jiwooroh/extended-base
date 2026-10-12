@@ -92,7 +92,9 @@ export class NotionTableView extends BasesView {
 		root.toggleClass('ntn-wrap', this.config.get('wrapCells') !== false);
 		root.toggleClass('ntn-vlines', this.config.get('verticalLines') !== false);
 
-		const props = this.applyColumnOrder(this.config.getOrder());
+		const allProps = this.applyColumnOrder(this.config.getOrder());
+		const hiddenColumns = this.config.get('hiddenColumns') as BasesPropertyId[] || [];
+		const props = allProps.filter((p) => !hiddenColumns.includes(p));
 		this.pills = computePillProps(props, this.data.data, this.config, this.app);
 		this.pinnedColors = parsePinnedColors(this.config.get('pinnedColors'));
 		this.titleIconCfg = readTitleIconConfig(this.config);
@@ -167,6 +169,19 @@ export class NotionTableView extends BasesView {
 							this.config.set('wrapColumns', newWrap);
 						});
 				});
+
+				// Title column can't be hidden — hiding it would leave a row
+				// with no way to identify or open the note.
+				if (prop !== 'file.name') {
+					menu.addItem((item) => {
+						item.setTitle('Hide column')
+							.setIcon('eye-off')
+							.onClick(() => {
+								const current = this.config.get('hiddenColumns') as BasesPropertyId[] || [];
+								this.config.set('hiddenColumns', [...current, prop]);
+							});
+					});
+				}
 
 				if (this.pills.pillProps.has(prop)) {
 					const disableColorColumns = this.config.get('disableColorColumns') as string[] || [];
@@ -324,6 +339,26 @@ export class NotionTableView extends BasesView {
 			});
 			menu.showAtMouseEvent(e);
 		});
+
+		if (hiddenColumns.length) {
+			const hiddenSelect = footerWrap.createDiv({
+				cls: 'ntn-limit-subtle',
+				text: `Hidden columns: ${hiddenColumns.length} ▾`,
+			});
+			hiddenSelect.addEventListener('click', (e) => {
+				const menu = new Menu();
+				for (const prop of hiddenColumns) {
+					menu.addItem((item) => {
+						item.setTitle(customNames[prop] || this.config.getDisplayName(prop))
+							.setIcon('eye')
+							.onClick(() => {
+								this.config.set('hiddenColumns', hiddenColumns.filter((p) => p !== prop));
+							});
+					});
+				}
+				menu.showAtMouseEvent(e);
+			});
+		}
 	}
 
 	private applyColumnWidth(th: HTMLElement, propId: string) {
