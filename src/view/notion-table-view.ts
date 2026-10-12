@@ -25,6 +25,7 @@ import { PinnedColors, applyPillColor, colorByName, resolvePillColor, resolvePil
 import { PillDetection, computePillProps, parsePinnedColors, pillLabel, stripPath } from '../lib/pills';
 import { buildFolderGroups, buildGroupTree, countEntries, GroupNode, hideSoleTopLevelFolder, isGroupedByFolder } from '../lib/groups';
 import { getPropertyIcon, getPropertyMetaType, isEditableProp, propBareName } from '../lib/property-types';
+import { syncPillColorToPrettyProperties } from '../lib/pretty-properties-sync';
 import { renamePillValue } from '../lib/rename';
 import { TitleIconConfig, readTitleIconConfig, renderTitleIcon } from '../lib/title-icon';
 import { isNullish, valueToStrings } from '../lib/values';
@@ -53,6 +54,8 @@ export class NotionTableView extends BasesView {
 	private pinnedColors: PinnedColors = new Map();
 	/** How a note's title icon renders (the `titleIcon`/`titleIconCustom` view options). */
 	private titleIconCfg: TitleIconConfig = { show: true, property: 'icon' };
+	/** Whether to also push pill colors into the Pretty Properties plugin (the `syncPrettyProperties` view option). */
+	private syncPP = false;
 	/** Set of group full keys that are currently collapsed. */
 	private collapsedGroups = new Set<string>();
 	/** The open select editor, if any (also drives outside-click detection). */
@@ -98,6 +101,7 @@ export class NotionTableView extends BasesView {
 		this.pills = computePillProps(props, this.data.data, this.config, this.app);
 		this.pinnedColors = parsePinnedColors(this.config.get('pinnedColors'));
 		this.titleIconCfg = readTitleIconConfig(this.config);
+		this.syncPP = this.config.get('syncPrettyProperties') === true;
 		const sortState = this.getSortState();
 
 		const table = root.createEl('table', { cls: 'ntn-table' });
@@ -720,6 +724,12 @@ export class NotionTableView extends BasesView {
 				const pill = wrap.createSpan({ cls: 'ntn-pill' });
 				this.applyPillColor(pill, item, useDefaultColor);
 				pill.setText(pillLabel(item));
+				if (this.syncPP) {
+					syncPillColorToPrettyProperties(
+						this.app, td.doc, propName, pillLabel(item),
+						resolvePillColor(item, this.pinnedColors, useDefaultColor),
+					);
+				}
 			}
 			if (editable) {
 				td.addClass('ntn-editable');

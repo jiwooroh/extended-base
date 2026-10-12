@@ -27,6 +27,25 @@ function titleIconOptions(): BasesAllOptions[] {
 }
 
 /**
+ * The `syncPrettyProperties` option, shared by all four views: when on, a
+ * list/tag/select pill's resolved color is also pushed into the Pretty
+ * Properties plugin's own color store, so a note's real property panel
+ * (and its inline tags) shows the same color as this view. Off by default —
+ * it writes into another plugin's settings, so it should be an explicit
+ * opt-in. Spread into each view's option list.
+ */
+function prettyPropertiesOptions(): BasesAllOptions[] {
+	return [
+		{
+			type: 'toggle',
+			key: 'syncPrettyProperties',
+			displayName: "Sync pill colors to Pretty Properties — matches this view's pill colors in the note's own property panel (requires the Pretty Properties plugin; never overwrites a color you picked by hand there)",
+			default: false,
+		},
+	];
+}
+
+/**
  * Build the option descriptors Obsidian renders in the view's settings.
  * Read the values back at render time with `this.config.get(key)`.
  */
@@ -65,6 +84,7 @@ export function buildViewOptions(_config: BasesViewConfig): BasesAllOptions[] {
 			key: 'pinnedColors',
 			displayName: 'Pinned pill colors (value=color: gray, brown, orange, yellow, green, blue, purple, pink, red)',
 		},
+		...prettyPropertiesOptions(),
 	];
 }
 
@@ -97,6 +117,7 @@ export function buildListViewOptions(_config: BasesViewConfig): BasesAllOptions[
 			key: 'pinnedColors',
 			displayName: 'Pinned pill colors',
 		},
+		...prettyPropertiesOptions(),
 	];
 }
 
@@ -129,6 +150,7 @@ export function buildFeedViewOptions(_config: BasesViewConfig): BasesAllOptions[
 			key: 'pinnedColors',
 			displayName: 'Pinned pill colors',
 		},
+		...prettyPropertiesOptions(),
 	];
 }
 
@@ -183,6 +205,7 @@ export function buildBoardViewOptions(_config: BasesViewConfig): BasesAllOptions
 			key: 'pinnedColors',
 			displayName: 'Pinned pill colors',
 		},
+		...prettyPropertiesOptions(),
 		{
 			type: 'multitext',
 			key: 'hiddenGroups',

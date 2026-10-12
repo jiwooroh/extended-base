@@ -24,6 +24,7 @@ import { LOG_PREFIX, NOTION_FEED_VIEW } from '../constants';
 import { PinnedColors, applyPillColor, colorByName, resolvePillColor, resolvePillOpacity } from '../lib/colors';
 import { PillDetection, computePillProps, parsePinnedColors, pillLabel } from '../lib/pills';
 import { isEditableProp, propBareName } from '../lib/property-types';
+import { syncPillColorToPrettyProperties } from '../lib/pretty-properties-sync';
 import { buildFolderGroups, buildGroupTree, countEntries, GroupNode, hideSoleTopLevelFolder, isGroupedByFolder } from '../lib/groups';
 import { renamePillValue } from '../lib/rename';
 import { TitleIconConfig, readTitleIconConfig, renderTitleIcon } from '../lib/title-icon';
@@ -60,6 +61,8 @@ export class NotionFeedView extends BasesView {
 	private pinnedColors: PinnedColors = new Map();
 	/** How a note's title icon renders (the `titleIcon`/`titleIconCustom` view options). */
 	private titleIconCfg: TitleIconConfig = { show: true, property: 'icon' };
+	/** Whether to also push pill colors into the Pretty Properties plugin (the `syncPrettyProperties` view option). */
+	private syncPP = false;
 	/** Set of group full keys that are currently collapsed. */
 	private collapsedGroups = new Set<string>();
 	/** The open select editor, if any (also drives outside-click detection). */
@@ -104,6 +107,7 @@ export class NotionFeedView extends BasesView {
 		this.pills = computePillProps(props, this.data.data, this.config, this.app);
 		this.pinnedColors = parsePinnedColors(this.config.get('pinnedColors'));
 		this.titleIconCfg = readTitleIconConfig(this.config);
+		this.syncPP = this.config.get('syncPrettyProperties') === true;
 
 		const feedContainer = root.createDiv({ cls: 'ntn-feed-container' });
 
@@ -225,6 +229,12 @@ export class NotionFeedView extends BasesView {
 			const pill = cell.createSpan({ cls: 'ntn-pill' });
 			this.applyPillColor(pill, item, useDefaultColor);
 			pill.setText(pillLabel(item));
+			if (this.syncPP) {
+				syncPillColorToPrettyProperties(
+					this.app, cell.doc, propName, pillLabel(item),
+					resolvePillColor(item, this.pinnedColors, useDefaultColor),
+				);
+			}
 		}
 		if (editable) {
 			cell.addClass('ntn-editable');
