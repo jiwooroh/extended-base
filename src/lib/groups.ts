@@ -8,7 +8,13 @@ export interface GroupNode {
 }
 
 /**
- * Transforms a flat list of groups into a hierarchical tree of GroupNodes.
+ * Transforms a flat list of groups into GroupNodes, one per distinct group
+ * key — flat, not nested. A key containing `/` (e.g. a category value like
+ * "01_Robots/AI/digital") is its own single group, exactly as it reads; it
+ * is not split into a tree of sub-groups. Real hierarchy is reserved for
+ * `file.folder` grouping ({@link buildFolderGroups}), where `/` actually
+ * means "nested folder" rather than just being a character the value
+ * happens to contain.
  */
 export function buildGroupTree(groups: BasesEntryGroup[]): Map<string, GroupNode> {
 	const roots = new Map<string, GroupNode>();
@@ -18,33 +24,8 @@ export function buildGroupTree(groups: BasesEntryGroup[]): Map<string, GroupNode
 			roots.set('', { key: '', fullKey: '', entries: [...group.entries], children: new Map() });
 			continue;
 		}
-		
 		const rawKey = group.key.toString();
-		const parts = rawKey.split('/');
-		
-		let currentMap = roots;
-		let currentFullKey = '';
-
-		for (let i = 0; i < parts.length; i++) {
-			const part = parts[i];
-			currentFullKey = currentFullKey ? `${currentFullKey}/${part}` : part;
-			
-			if (!currentMap.has(part)) {
-				currentMap.set(part, {
-					key: part,
-					fullKey: currentFullKey,
-					entries: [],
-					children: new Map(),
-				});
-			}
-			
-			const node = currentMap.get(part)!;
-			if (i === parts.length - 1) {
-				node.entries.push(...group.entries);
-			}
-			
-			currentMap = node.children;
-		}
+		roots.set(rawKey, { key: rawKey, fullKey: rawKey, entries: [...group.entries], children: new Map() });
 	}
 
 	return roots;

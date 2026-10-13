@@ -163,8 +163,101 @@
 
 			<details class="release" open>
 				<summary>
-					<span class="ver">1.1.1</span>
+					<span class="ver">1.3.0</span>
 					<span class="tag">Latest</span>
+				</summary>
+				<div class="body">
+					<ul>
+						<li>Added: right-click a table column header and choose
+							<strong>Hide column</strong> to remove it from view; a "Hidden
+							columns" control in the table's footer lists every hidden
+							column so you can bring one back. The title column can't be
+							hidden.</li>
+						<li>Added: a "Sync pill colors to Pretty Properties" view option
+							(off by default, all four views) that pushes a pill's resolved
+							color into the
+							<a href="https://github.com/anareaty/pretty-properties">Pretty Properties</a>
+							plugin's own color store, so a note's real property panel (and
+							its inline tags) shows the same color as this view's pills. It
+							never overwrites a color picked by hand through Pretty
+							Properties' own color menu.</li>
+						<li>Fixed: a long, unbroken value (e.g. a URL) in a board card's
+							property could overflow past the card's right edge instead of
+							wrapping.</li>
+						<li>Fixed: sorting a table column by a pill/select property with
+							no explicit drag-to-reorder saved fell back to plain
+							alphabetical order, even though the select editor's own dropdown
+							already lists that column's options in first-seen order, not
+							alphabetical. Sort now falls back to that same first-seen order,
+							so clicking the header matches what the dropdown already shows.</li>
+					</ul>
+				</div>
+			</details>
+
+			<details class="release">
+				<summary>
+					<span class="ver">1.2.0</span>
+				</summary>
+				<div class="body">
+					<ul>
+						<li>Added: the table view's per-column right-click menu can now
+							pin a pill column's select type — <strong>Select (single)</strong>
+							or <strong>Multi-select</strong> — overriding whatever it would
+							otherwise auto-detect. <strong>Auto-detect select type</strong>
+							clears the override.</li>
+						<li>Changed: a pill column's auto-detected select type (when no
+							override is set) now comes from the data itself — multi-select
+							once some entry actually holds more than one value for it,
+							single-select otherwise — instead of always defaulting to
+							multi-select just because its vault-level frontmatter type
+							(<code>tags</code>, <code>multitext</code>, …) is list-shaped. A
+							freshly-created list property with at most one value per note
+							now starts single-select.</li>
+						<li>Fixed: grouping by an ordinary property whose value happened
+							to contain <code>/</code> (e.g. a category like
+							<code>01_Robots/AI/digital</code>) split it into a nested tree
+							of sub-groups — one level per <code>/</code>-separated segment —
+							the same treatment meant for real <code>file.folder</code>
+							hierarchy. Grouping by anything other than <code>file.folder</code>
+							is flat again: a value is one group, <code>/</code> included,
+							exactly as it reads.</li>
+					</ul>
+				</div>
+			</details>
+
+			<details class="release">
+				<summary>
+					<span class="ver">1.1.2</span>
+				</summary>
+				<div class="body">
+					<ul>
+						<li>Changed: the title icon's only source is now a frontmatter
+							property — the page-emoji/Obsidian-file-icon/custom-icon modes
+							are gone, since Obsidian has no per-file custom icon of its own.
+							The one real source is a plugin like
+							<a href="https://github.com/FlorianWoelki/obsidian-iconize">Iconize</a>
+							configured to sync icons to frontmatter. A note with nothing set
+							there gets a plain document icon. <strong>Show title icon</strong>
+							(on/off) and <strong>Icon property</strong> (the frontmatter key,
+							default <code>icon</code>) are what's left, shared by all four
+							views.</li>
+						<li>Fixed: the title icon was vertically centered against the
+							title text, which only looks right for a single line — a
+							wrapped multi-line title (the board view wraps on purpose; the
+							table and list can too) centered the icon against the whole
+							block instead of its first line. Now top-aligned everywhere.</li>
+						<li>Fixed: an empty board card still claimed its container's
+							full spacing gap against the title above it — the properties
+							section is now skipped entirely, not left empty, when every
+							property is empty. Card padding and line spacing are also
+							tighter.</li>
+					</ul>
+				</div>
+			</details>
+
+			<details class="release">
+				<summary>
+					<span class="ver">1.1.1</span>
 				</summary>
 				<div class="body">
 					<ul>

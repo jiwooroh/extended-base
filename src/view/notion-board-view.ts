@@ -23,7 +23,9 @@ import { PinnedColors, applyPillColor, colorByName, resolvePillColor, resolvePil
 import { PillDetection, computePillProps, parsePinnedColors, pillLabel, stripPath } from '../lib/pills';
 import { buildFolderGroups, GroupNode, hideSoleTopLevelFolder, isGroupedByFolder } from '../lib/groups';
 import { getPropertyMetaType, isEditableProp, propBareName } from '../lib/property-types';
+import { syncPillColorToPrettyProperties } from '../lib/pretty-properties-sync';
 import { renamePillValue } from '../lib/rename';
+import { TitleIconConfig, readTitleIconConfig, renderTitleIcon } from '../lib/title-icon';
 import { isNullish, valueToStrings } from '../lib/values';
 import { buildColorMenu } from './color-menu';
 import { NotePageModal, OpenSelectOpts } from './note-modal';
@@ -49,6 +51,10 @@ export class NotionBoardView extends BasesView {
 	private pills: PillDetection = { pillProps: new Set(), listProps: new Set() };
 	/** User-pinned value → color overrides from the `pinnedColors` view option. */
 	private pinnedColors: PinnedColors = new Map();
+	/** How a note's title icon renders (the `titleIcon`/`titleIconCustom` view options). */
+	private titleIconCfg: TitleIconConfig = { show: true, property: 'icon' };
+	/** Whether to also push pill colors into the Pretty Properties plugin (the `syncPrettyProperties` view option). */
+	private syncPP = false;
 	/** The open select editor, if any (also drives outside-click detection). */
 	private selectEditor: SelectEditor | null = null;
 	/** Set of subgroup full keys (nested folders within a column) that are currently collapsed. */
@@ -131,6 +137,8 @@ export class NotionBoardView extends BasesView {
 		const props = this.config.getOrder();
 		this.pills = computePillProps(props, this.data.data, this.config, this.app);
 		this.pinnedColors = parsePinnedColors(this.config.get('pinnedColors'));
+		this.titleIconCfg = readTitleIconConfig(this.config);
+		this.syncPP = this.config.get('syncPrettyProperties') === true;
 
 		const boardContainer = root.createDiv({ cls: 'ntn-board-container' });
 
@@ -334,17 +342,36 @@ export class NotionBoardView extends BasesView {
 		props: BasesPropertyId[],
 	): void {
 		const cardEl = container.createDiv({ cls: 'ntn-board-card' });
-		
+
 		// Title is always first
 		const titleWrap = cardEl.createDiv({ cls: 'ntn-board-card-title' });
 		this.renderCell(titleWrap, entry, 'file.name');
-		
+
+		// Skipped entirely (not just left empty) when nothing qualifies —
+		// an empty-but-present flex child still claims .ntn-board-card's own
+		// `gap` between it and the title above, padding the card for nothing.
+		const visibleProps = props.filter((prop) => prop !== 'file.name' && !this.isCellEmpty(entry, prop));
+		if (!visibleProps.length) return;
 		const propsWrap = cardEl.createDiv({ cls: 'ntn-board-card-props' });
-		for (const prop of props) {
-			if (prop === 'file.name') continue;
+		for (const prop of visibleProps) {
 			const cellWrap = propsWrap.createDiv({ cls: 'ntn-board-cell' });
 			this.renderCell(cellWrap, entry, prop);
 		}
+	}
+
+	/**
+	 * Whether a property has nothing to show for this entry — an empty-list
+	 * pill, or a nullish plain value. A card otherwise grows one full row
+	 * taller per *configured* property regardless of whether this note
+	 * actually has anything in it, which with many columns stacked up a lot
+	 * of dead vertical space. A checkbox is never "empty": unchecked is a
+	 * real, meaningful value, not an absent one.
+	 */
+	private isCellEmpty(entry: BasesEntry, prop: BasesPropertyId): boolean {
+		const value = entry.getValue(prop);
+		if (this.pills.pillProps.has(prop)) return valueToStrings(value).length === 0;
+		if (value instanceof BooleanValue) return false;
+		return isNullish(value);
 	}
 
 	private renderCell(td: HTMLElement, entry: BasesEntry, prop: BasesPropertyId): void {
@@ -352,6 +379,7 @@ export class NotionBoardView extends BasesView {
 			td.addClass('ntn-col-title'); // Inherit some styling like min-width
 			
 			const titleWrap = td.createDiv({ cls: 'ntn-title-wrap' });
+			renderTitleIcon(titleWrap, this.titleIconCfg, entry);
 
 			const link = titleWrap.createSpan({ text: entry.file.basename, cls: 'ntn-title-text' });
 			link.addEventListener('click', (evt) => {
@@ -381,6 +409,12 @@ export class NotionBoardView extends BasesView {
 				const pill = wrap.createSpan({ cls: 'ntn-pill' });
 				this.applyPillColor(pill, item, useDefaultColor);
 				pill.setText(pillLabel(item));
+				if (this.syncPP) {
+					syncPillColorToPrettyProperties(
+						this.app, td.doc, propName, pillLabel(item),
+						resolvePillColor(item, this.pinnedColors, useDefaultColor),
+					);
+				}
 			}
 			if (editable) {
 				td.addClass('ntn-editable');

@@ -22,10 +22,12 @@ import {
 } from 'obsidian';
 import { LOG_PREFIX, NOTION_TABLE_VIEW } from '../constants';
 import { PinnedColors, applyPillColor, colorByName, resolvePillColor, resolvePillOpacity } from '../lib/colors';
-import { PillDetection, computePillProps, parsePinnedColors, pillLabel, stripPath } from '../lib/pills';
+import { PillDetection, buildDefaultSelectOrder, computePillProps, parsePinnedColors, pillLabel, stripPath } from '../lib/pills';
 import { buildFolderGroups, buildGroupTree, countEntries, GroupNode, hideSoleTopLevelFolder, isGroupedByFolder } from '../lib/groups';
 import { getPropertyIcon, getPropertyMetaType, isEditableProp, propBareName } from '../lib/property-types';
+import { syncPillColorToPrettyProperties } from '../lib/pretty-properties-sync';
 import { renamePillValue } from '../lib/rename';
+import { TitleIconConfig, readTitleIconConfig, renderTitleIcon } from '../lib/title-icon';
 import { isNullish, valueToStrings } from '../lib/values';
 import { NotePageModal, OpenSelectOpts } from './note-modal';
 import { SelectEditor } from './select-editor';
@@ -50,6 +52,10 @@ export class NotionTableView extends BasesView {
 	private pills: PillDetection = { pillProps: new Set(), listProps: new Set() };
 	/** User-pinned value → color overrides from the `pinnedColors` view option. */
 	private pinnedColors: PinnedColors = new Map();
+	/** How a note's title icon renders (the `titleIcon`/`titleIconCustom` view options). */
+	private titleIconCfg: TitleIconConfig = { show: true, property: 'icon' };
+	/** Whether to also push pill colors into the Pretty Properties plugin (the `syncPrettyProperties` view option). */
+	private syncPP = false;
 	/** Set of group full keys that are currently collapsed. */
 	private collapsedGroups = new Set<string>();
 	/** The open select editor, if any (also drives outside-click detection). */
@@ -89,9 +95,13 @@ export class NotionTableView extends BasesView {
 		root.toggleClass('ntn-wrap', this.config.get('wrapCells') !== false);
 		root.toggleClass('ntn-vlines', this.config.get('verticalLines') !== false);
 
-		const props = this.applyColumnOrder(this.config.getOrder());
+		const allProps = this.applyColumnOrder(this.config.getOrder());
+		const hiddenColumns = this.config.get('hiddenColumns') as BasesPropertyId[] || [];
+		const props = allProps.filter((p) => !hiddenColumns.includes(p));
 		this.pills = computePillProps(props, this.data.data, this.config, this.app);
 		this.pinnedColors = parsePinnedColors(this.config.get('pinnedColors'));
+		this.titleIconCfg = readTitleIconConfig(this.config);
+		this.syncPP = this.config.get('syncPrettyProperties') === true;
 		const sortState = this.getSortState();
 
 		const table = root.createEl('table', { cls: 'ntn-table' });
@@ -164,6 +174,19 @@ export class NotionTableView extends BasesView {
 						});
 				});
 
+				// Title column can't be hidden — hiding it would leave a row
+				// with no way to identify or open the note.
+				if (prop !== 'file.name') {
+					menu.addItem((item) => {
+						item.setTitle('Hide column')
+							.setIcon('eye-off')
+							.onClick(() => {
+								const current = this.config.get('hiddenColumns') as BasesPropertyId[] || [];
+								this.config.set('hiddenColumns', [...current, prop]);
+							});
+					});
+				}
+
 				if (this.pills.pillProps.has(prop)) {
 					const disableColorColumns = this.config.get('disableColorColumns') as string[] || [];
 					const isColorDisabled = disableColorColumns.includes(prop);
@@ -175,6 +198,38 @@ export class NotionTableView extends BasesView {
 								this.config.set('disableColorColumns', newDisable);
 							});
 					});
+
+					// Single- vs multi-select: defaults to whatever computePillProps
+					// auto-detected from the data (see its own doc comment), but can
+					// be pinned either way from here regardless of that detection.
+					menu.addSeparator();
+					const isMultiNow = this.pills.listProps.has(prop);
+					const setSelectType = (value: 'select' | 'multiselect' | null) => {
+						const overrides = { ...(this.config.get('selectTypeOverride') as Record<string, string> || {}) };
+						if (value === null) delete overrides[prop];
+						else overrides[prop] = value;
+						this.config.set('selectTypeOverride', overrides);
+					};
+					menu.addItem((item) => {
+						item.setTitle('Select (single)')
+							.setIcon('circle')
+							.setChecked(!isMultiNow)
+							.onClick(() => setSelectType('select'));
+					});
+					menu.addItem((item) => {
+						item.setTitle('Multi-select')
+							.setIcon('list')
+							.setChecked(isMultiNow)
+							.onClick(() => setSelectType('multiselect'));
+					});
+					const overrides = this.config.get('selectTypeOverride') as Record<string, string> || {};
+					if (prop in overrides) {
+						menu.addItem((item) => {
+							item.setTitle('Auto-detect select type')
+								.setIcon('sparkles')
+								.onClick(() => setSelectType(null));
+						});
+					}
 				}
 
 				menu.showAtMouseEvent(e);
@@ -288,6 +343,26 @@ export class NotionTableView extends BasesView {
 			});
 			menu.showAtMouseEvent(e);
 		});
+
+		if (hiddenColumns.length) {
+			const hiddenSelect = footerWrap.createDiv({
+				cls: 'ntn-limit-subtle',
+				text: `Hidden columns: ${hiddenColumns.length} ▾`,
+			});
+			hiddenSelect.addEventListener('click', (e) => {
+				const menu = new Menu();
+				for (const prop of hiddenColumns) {
+					menu.addItem((item) => {
+						item.setTitle(customNames[prop] || this.config.getDisplayName(prop))
+							.setIcon('eye')
+							.onClick(() => {
+								this.config.set('hiddenColumns', hiddenColumns.filter((p) => p !== prop));
+							});
+					});
+				}
+				menu.showAtMouseEvent(e);
+			});
+		}
 	}
 
 	private applyColumnWidth(th: HTMLElement, propId: string) {
@@ -468,11 +543,12 @@ export class NotionTableView extends BasesView {
 	}
 
 	/**
-	 * Compare two entries by one property. Pill/select columns with a
-	 * user-defined option order (see the select editor's drag handles)
-	 * sort by that order instead of alphabetically; numbers and booleans
-	 * compare numerically; everything else falls back to a locale/numeric
-	 * string compare (which also sorts ISO dates correctly).
+	 * Compare two entries by one property. Pill/select columns sort by their
+	 * option order — a user-defined order (the select editor's drag handles)
+	 * if one's been set, otherwise the same first-seen order the select
+	 * editor's dropdown already shows — never alphabetically; numbers and
+	 * booleans compare numerically; everything else falls back to a
+	 * locale/numeric string compare (which also sorts ISO dates correctly).
 	 */
 	private compareEntries(a: BasesEntry, b: BasesEntry, prop: BasesPropertyId): number {
 		const va = a.getValue(prop);
@@ -506,11 +582,18 @@ export class NotionTableView extends BasesView {
 		return va.toString().localeCompare(vb.toString(), undefined, { sensitivity: 'base', numeric: true });
 	}
 
-	/** The user's saved option order for a select/pill property, or null if none is set. */
+	/**
+	 * The option order to sort a select/pill property by: the user's saved
+	 * order if one's been set, otherwise the same first-seen order the
+	 * select editor's dropdown shows for it; null only when the property has
+	 * no known values at all yet.
+	 */
 	private getSelectOrder(prop: BasesPropertyId): string[] | null {
 		const bare = propBareName(prop);
-		const order = this.getSelectOptionOrder(bare);
-		return order.length ? order : null;
+		const stored = this.getSelectOptionOrder(bare);
+		if (stored.length) return stored;
+		const fallback = buildDefaultSelectOrder(this.data.data, prop);
+		return fallback.length ? fallback : null;
 	}
 
 	/** Swap a header title for an inline rename input; Enter/blur commits, Esc cancels. */
@@ -619,6 +702,7 @@ export class NotionTableView extends BasesView {
 			td.addClass('ntn-col-title'); // Inherit some styling like min-width
 			
 			const titleWrap = td.createDiv({ cls: 'ntn-title-wrap' });
+			renderTitleIcon(titleWrap, this.titleIconCfg, entry);
 
 			const link = titleWrap.createSpan({ text: entry.file.basename, cls: 'ntn-title-text' });
 			link.addEventListener('click', (evt) => {
@@ -648,6 +732,12 @@ export class NotionTableView extends BasesView {
 				const pill = wrap.createSpan({ cls: 'ntn-pill' });
 				this.applyPillColor(pill, item, useDefaultColor);
 				pill.setText(pillLabel(item));
+				if (this.syncPP) {
+					syncPillColorToPrettyProperties(
+						this.app, td.doc, propName, pillLabel(item),
+						resolvePillColor(item, this.pinnedColors, useDefaultColor),
+					);
+				}
 			}
 			if (editable) {
 				td.addClass('ntn-editable');

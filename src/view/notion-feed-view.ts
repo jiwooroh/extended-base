@@ -24,8 +24,10 @@ import { LOG_PREFIX, NOTION_FEED_VIEW } from '../constants';
 import { PinnedColors, applyPillColor, colorByName, resolvePillColor, resolvePillOpacity } from '../lib/colors';
 import { PillDetection, computePillProps, parsePinnedColors, pillLabel } from '../lib/pills';
 import { isEditableProp, propBareName } from '../lib/property-types';
+import { syncPillColorToPrettyProperties } from '../lib/pretty-properties-sync';
 import { buildFolderGroups, buildGroupTree, countEntries, GroupNode, hideSoleTopLevelFolder, isGroupedByFolder } from '../lib/groups';
 import { renamePillValue } from '../lib/rename';
+import { TitleIconConfig, readTitleIconConfig, renderTitleIcon } from '../lib/title-icon';
 import { valueToStrings } from '../lib/values';
 import { NotePageModal, OpenSelectOpts } from './note-modal';
 import { SelectEditor } from './select-editor';
@@ -57,6 +59,10 @@ export class NotionFeedView extends BasesView {
 	private pills: PillDetection = { pillProps: new Set(), listProps: new Set() };
 	/** User-pinned value → color overrides from the `pinnedColors` view option. */
 	private pinnedColors: PinnedColors = new Map();
+	/** How a note's title icon renders (the `titleIcon`/`titleIconCustom` view options). */
+	private titleIconCfg: TitleIconConfig = { show: true, property: 'icon' };
+	/** Whether to also push pill colors into the Pretty Properties plugin (the `syncPrettyProperties` view option). */
+	private syncPP = false;
 	/** Set of group full keys that are currently collapsed. */
 	private collapsedGroups = new Set<string>();
 	/** The open select editor, if any (also drives outside-click detection). */
@@ -100,6 +106,8 @@ export class NotionFeedView extends BasesView {
 		const props = this.config.getOrder();
 		this.pills = computePillProps(props, this.data.data, this.config, this.app);
 		this.pinnedColors = parsePinnedColors(this.config.get('pinnedColors'));
+		this.titleIconCfg = readTitleIconConfig(this.config);
+		this.syncPP = this.config.get('syncPrettyProperties') === true;
 
 		const feedContainer = root.createDiv({ cls: 'ntn-feed-container' });
 
@@ -178,7 +186,9 @@ export class NotionFeedView extends BasesView {
 		const card = container.createDiv({ cls: 'ntn-feed-entry' });
 
 		const header = card.createDiv({ cls: 'ntn-feed-header' });
-		const title = header.createEl('a', {
+		const titleWrap = header.createDiv({ cls: 'ntn-feed-title-wrap' });
+		renderTitleIcon(titleWrap, this.titleIconCfg, entry);
+		const title = titleWrap.createEl('a', {
 			cls: 'ntn-feed-title',
 			text: entry.file.basename,
 			attr: { href: '#' },
@@ -219,6 +229,12 @@ export class NotionFeedView extends BasesView {
 			const pill = cell.createSpan({ cls: 'ntn-pill' });
 			this.applyPillColor(pill, item, useDefaultColor);
 			pill.setText(pillLabel(item));
+			if (this.syncPP) {
+				syncPillColorToPrettyProperties(
+					this.app, cell.doc, propName, pillLabel(item),
+					resolvePillColor(item, this.pinnedColors, useDefaultColor),
+				);
+			}
 		}
 		if (editable) {
 			cell.addClass('ntn-editable');

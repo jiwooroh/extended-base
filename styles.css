@@ -251,7 +251,11 @@
 
 .ntn-title-wrap {
 	display: flex;
-	align-items: center;
+	/* Top-aligned, not centered: a centered icon looks fine against a
+	   single line, but drifts to the middle of the whole block once the
+	   title wraps onto several lines (long titles, or the board view,
+	   which wraps titles on purpose) instead of sitting by its first line. */
+	align-items: flex-start;
 	gap: 6px;
 	position: relative;
 	min-width: 0;
@@ -261,15 +265,37 @@
 .ntn-page-icon {
 	font-size: 14px;
 	flex-shrink: 0;
-	filter: grayscale(1);
 	opacity: 0.8;
+	/* Optical nudge for top-aligned .ntn-title-wrap: without it the icon's
+	   own box sits a hair above the text's cap-height instead of reading
+	   as flush with the first line. */
+	margin-top: 2px;
+}
+
+/* Obsidian's icon set takes the current text color, so it follows whatever
+   theme is active instead of being a fixed glyph. */
+.ntn-page-icon-lucide {
+	display: inline-flex;
+	align-items: center;
+	color: var(--ntn-text-muted);
+}
+
+.ntn-page-icon-lucide svg {
+	width: 15px;
+	height: 15px;
 }
 
 .ntn-title-text {
 	font-weight: 500;
-	/* A border rather than text-decoration-* longhands, which Obsidian's
-	   supported browser baseline only partially implements. */
-	border-bottom: 1px solid rgba(55, 53, 47, 0.16);
+	/* A real text-decoration underline (like a hyperlink) rather than a
+	   border — a border draws one flat line under the whole box, so a
+	   title shorter than its container (or one that wraps, in the board
+	   view) reads as a line under empty space instead of under the text
+	   itself. text-decoration hugs the glyphs exactly like link text does. */
+	text-decoration: underline;
+	text-decoration-color: rgba(55, 53, 47, 0.16);
+	text-decoration-thickness: 1px;
+	text-underline-offset: 2px;
 	cursor: pointer;
 	white-space: nowrap;
 	overflow: hidden;
@@ -279,7 +305,7 @@
 }
 
 .theme-dark .ntn-title-text {
-	border-bottom-color: rgba(255, 255, 255, 0.14);
+	text-decoration-color: rgba(255, 255, 255, 0.14);
 }
 
 /* Hover-reveal OPEN button — absolutely anchored so it can never
@@ -1332,11 +1358,11 @@
 	background: var(--background-primary);
 	border: 1px solid var(--ntn-border);
 	border-radius: 6px;
-	padding: 10px;
+	padding: 8px;
 	box-shadow: rgba(15, 15, 15, 0.05) 0 1px 2px;
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
+	gap: 6px;
 	cursor: pointer;
 	transition: background 20ms ease-in;
 }
@@ -1352,6 +1378,7 @@
 .ntn-board-card-title {
 	font-weight: 500;
 	font-size: 14px;
+	line-height: 1.3;
 }
 
 /* .ntn-title-text (shared with table/list) truncates to one line with an
@@ -1376,6 +1403,11 @@
 .ntn-board-cell {
 	display: flex;
 	align-items: center;
+}
+
+.ntn-board-card .ntn-cell.ntn-cell,
+.ntn-board-card .ntn-cell.ntn-cell * {
+	overflow-wrap: anywhere;
 }
 
 .ntn-board-column-new {
@@ -1512,8 +1544,16 @@
 	padding: 16px 20px 8px;
 }
 
+.ntn-feed-title-wrap {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	min-width: 0;
+}
+
 .ntn-feed-title {
 	display: block;
+	min-width: 0;
 	font-size: 18px;
 	font-weight: 700;
 	color: var(--ntn-text);

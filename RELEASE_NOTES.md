@@ -1,41 +1,50 @@
-# Extended Base 1.1.1
+# Extended Base 1.3.0
 
-A small bug-fix release: two issues reported after 1.1.0, both fixed.
+Hide table columns you don't need right now, keep the same colors in
+Pretty Properties as in your bases, and get sort order that actually
+matches what the dropdown already shows.
 
-## 🐛 Empty cells showed the text "null"
+## 🆕 Hide table columns
 
-A property with no value rendered the literal text `null` instead of
-staying blank — and could even show up as a spurious `null` entry in a
-pill column's own list of known values.
+Right-click a column header and choose **Hide column**. A "Hidden
+columns" control appears in the table's footer listing every hidden
+column — click one to bring it back. The title column can't be
+hidden, since a row needs at least that to identify or open the note.
 
-**Cause:** Bases represents "no value" with a `NullValue` object, not
-plain JavaScript `null`. That object's `toString()` returns the string
-`"null"`. Every "is this value empty?" check in this plugin compared
-against JS `null`/`undefined` only, so a `NullValue` slipped through
-and got rendered as text.
+## 🆕 Match colors in Pretty Properties
 
-**Fix:** a `NullValue` is now treated as empty everywhere a value's
-presence gates rendering, inline-edit prefill, sorting, and the pill
-value list.
+If you use the [Pretty Properties](https://github.com/anareaty/pretty-properties)
+plugin, there's a new "Sync pill colors to Pretty Properties" view
+option (off by default, in all four views). Turn it on and a pill's
+resolved color here is also pushed into Pretty Properties' own color
+store — so a note's real property panel, and its inline tags, show the
+exact same color as this view's pills.
 
-## 🐛 Scalar pills didn't open the select editor in `type: bases` views
+It's non-destructive: a color you've picked by hand through Pretty
+Properties' own color menu is never overwritten, only values this
+plugin hasn't touched yet (or already synced itself) get written.
 
-Clicking a scalar pill property (e.g. a `select`-typed `status` or
-`priority`) fell through to plain text editing instead of opening the
-select menu, specifically in a base using the legacy `type: bases` view
-declaration.
+## 🧠 Sort now matches the dropdown, not the alphabet
 
-**Cause:** that declaration hands properties to the view already
-normalized to their bare name, with no `note.` prefix. Editability was
-decided with `prop.startsWith('note.')`, which a prefix-less id never
-matches, so it read as read-only even though it's ordinary frontmatter.
+A pill/select column with no explicit drag-to-reorder saved used to
+sort alphabetically by default — even though the select editor's own
+dropdown already lists that column's options in first-seen order, not
+alphabetical. Clicking the header now sorts by that same first-seen
+order instead, so the two finally agree. Drag a row's grip handle in
+the dropdown to set your own order any time; it still wins once set.
 
-**Fix:** a property is now editable unless it's explicitly `file.*` or
-`formula.*` — matching exactly what was reported and suggested.
+## 🐛 Fixed
+
+- **Board card links no longer overflow.** A long, unbroken value like
+  a URL in a board card's property could spill past the card's right
+  edge instead of wrapping onto the next line.
 
 ## Upgrading
 
-Drop-in — no config or `.base` file changes needed.
+Drop-in — no config or `.base` file changes needed. Existing pill
+columns may visually re-sort once if they had no explicit order saved
+and their first-seen order differs from alphabetical; drag to set your
+own order any time. The Pretty Properties sync is off by default —
+turn it on per-view if you want it.
 
-See the [full changelog](README.md#changelog) for the complete history,
-including [1.1.0](README.md#110)'s new Notion Feed view.
+See the [full changelog](README.md#changelog) for the complete history.
