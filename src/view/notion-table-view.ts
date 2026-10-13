@@ -369,7 +369,19 @@ export class NotionTableView extends BasesView {
 		const widths = this.config.get('columnWidths') as Record<string, number> || {};
 		// Width lives in a CSS variable the stylesheet reads, so the element
 		// carries no inline width/min-width of its own.
-		const setWidth = (px: number) => th.setCssProps({ '--ntn-col-width': `${px}px` });
+		const titleText = th.querySelector<HTMLElement>('.ntn-th-title-text');
+		// A table with table-layout:auto can never shrink a column below its
+		// own nowrap text's rendered width — min-width on the cell is only a
+		// hint auto-layout is free to ignore, not a hard cap. So instead of
+		// just visually truncating it, hide the label outright (not merely
+		// clip it) once a dragged column gets this narrow — a display:none
+		// element drops out of auto-layout's min-content calculation
+		// entirely, letting the column keep shrinking down to just the icon.
+		const TEXT_HIDE_WIDTH = 48;
+		const setWidth = (px: number) => {
+			th.setCssProps({ '--ntn-col-width': `${px}px` });
+			titleText?.toggleClass('ntn-th-text-hidden', px > 0 && px < TEXT_HIDE_WIDTH);
+		};
 		let width = widths[propId] ?? 0;
 		if (width) setWidth(width);
 
@@ -381,7 +393,9 @@ export class NotionTableView extends BasesView {
 		const moveHandler = (ev: PointerEvent) => {
 			if (!isResizing) return;
 			const dx = ev.clientX - startX;
-			width = Math.max(20, startW + dx);
+			// Floored at roughly icon + padding, not 0 — a column narrower
+			// than its own icon would hide that too, leaving nothing to grab.
+			width = Math.max(36, startW + dx);
 			setWidth(width);
 		};
 

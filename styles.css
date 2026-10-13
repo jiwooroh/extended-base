@@ -167,6 +167,14 @@
 	text-overflow: ellipsis;
 }
 
+/* Set by NotionTableView.applyColumnWidth once a dragged column is too
+   narrow to show the label — display:none (not just visual clipping) so
+   the table's own auto-layout min-content calculation drops it too,
+   letting the column keep shrinking down to just its icon. */
+.ntn-th-text-hidden {
+	display: none;
+}
+
 /* Dragged header: dim it while a drop target elsewhere shows where it lands. */
 .ntn-th-dragging {
 	opacity: 0.5;
