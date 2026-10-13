@@ -208,10 +208,11 @@ then opens the panel instead of a tab (Ctrl/Cmd-click still opens a tab):
   value already used for that property, with a checkmark on the selected
   ones, search, and create-on-Enter. Drag a row's grip handle to reorder
   the option list — sorting a table column by that property (click its
-  header) follows the order you set instead of alphabetical. Click the
-  pencil icon (or double-click the pill) to rename a value everywhere it's
-  currently used — every note holding it gets rewritten, in the
-  background, as you confirm the new name.
+  header) always follows that same option order, never alphabetical:
+  the order you've dragged if you've set one, otherwise the dropdown's
+  own first-seen order. Click the pencil icon (or double-click the pill)
+  to rename a value everywhere it's currently used — every note holding
+  it gets rewritten, in the background, as you confirm the new name.
 
   ![Renaming a value from the select editor, pencil icon next to the color picker](docs/asset/rename_pencil.png)
 - **Inline editing** — click a cell to edit text and numbers in a
@@ -227,6 +228,16 @@ then opens the panel instead of a tab (Ctrl/Cmd-click still opens a tab):
   base toolbar, not a plugin setting), with the nesting, folder handling,
   and collapsing described in [Nested & folder
   groups](#nested--folder-groups).
+- **Hide table columns** — right-click a column header and choose **Hide
+  column**; a "Hidden columns" control appears in the table's footer
+  listing every hidden column so you can bring one back.
+- **Sync pill colors to Pretty Properties** — an opt-in view option (all
+  four views) that pushes a pill's resolved color into the
+  [Pretty Properties](https://github.com/anareaty/pretty-properties)
+  plugin's own color store, so a note's real property panel (and its
+  inline tags) shows the same color as this view's pills. Never
+  overwrites a color you picked by hand through Pretty Properties' own
+  color menu.
 
 ## Usage
 
@@ -247,8 +258,10 @@ then opens the panel instead of a tab (Ctrl/Cmd-click still opens a tab):
 | Show title icon | ✅ | ✅ | ✅ | ✅ |
 | Icon property | ✅ | ✅ | ✅ | ✅ |
 | Hidden groups | | | ✅ | |
+| Hidden columns (right-click a header) | ✅ | | | |
 | Properties to show as colored pills | ✅ | ✅ | ✅ | ✅ |
 | Pinned pill colors | ✅ | ✅ | ✅ | ✅ |
+| Sync pill colors to Pretty Properties | ✅ | ✅ | ✅ | ✅ |
 
 Column widths, order, sort, icons, renamed headers, per-column wrapping,
 per-column color toggles, and per-column select-type overrides are all set
@@ -333,6 +346,29 @@ Source layout:
 - ⚪️ **Gallery view** — card galleries with cover images.
 
 ## Changelog
+
+### 1.3.0
+
+- **Added:** right-click a table column header and choose **Hide
+  column** to remove it from view; a "Hidden columns" control in the
+  table's footer lists every hidden column so you can bring one back.
+  The title column can't be hidden.
+- **Added:** a "Sync pill colors to Pretty Properties" view option (off
+  by default, all four views) that pushes a pill's resolved color into
+  the [Pretty Properties](https://github.com/anareaty/pretty-properties)
+  plugin's own color store, so a note's real property panel (and its
+  inline tags) shows the same color as this view's pills. It never
+  overwrites a color picked by hand through Pretty Properties' own
+  color menu.
+- **Fixed:** a long, unbroken value (e.g. a URL) in a board card's
+  property could overflow past the card's right edge instead of
+  wrapping.
+- **Fixed:** sorting a table column by a pill/select property with no
+  explicit drag-to-reorder saved fell back to plain alphabetical order,
+  even though the select editor's own dropdown already lists that
+  column's options in first-seen order, not alphabetical. Sort now
+  falls back to that same first-seen order, so clicking the header
+  matches what the dropdown already shows.
 
 ### 1.2.0
 

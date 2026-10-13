@@ -163,8 +163,40 @@
 
 			<details class="release" open>
 				<summary>
-					<span class="ver">1.2.0</span>
+					<span class="ver">1.3.0</span>
 					<span class="tag">Latest</span>
+				</summary>
+				<div class="body">
+					<ul>
+						<li>Added: right-click a table column header and choose
+							<strong>Hide column</strong> to remove it from view; a "Hidden
+							columns" control in the table's footer lists every hidden
+							column so you can bring one back. The title column can't be
+							hidden.</li>
+						<li>Added: a "Sync pill colors to Pretty Properties" view option
+							(off by default, all four views) that pushes a pill's resolved
+							color into the
+							<a href="https://github.com/anareaty/pretty-properties">Pretty Properties</a>
+							plugin's own color store, so a note's real property panel (and
+							its inline tags) shows the same color as this view's pills. It
+							never overwrites a color picked by hand through Pretty
+							Properties' own color menu.</li>
+						<li>Fixed: a long, unbroken value (e.g. a URL) in a board card's
+							property could overflow past the card's right edge instead of
+							wrapping.</li>
+						<li>Fixed: sorting a table column by a pill/select property with
+							no explicit drag-to-reorder saved fell back to plain
+							alphabetical order, even though the select editor's own dropdown
+							already lists that column's options in first-seen order, not
+							alphabetical. Sort now falls back to that same first-seen order,
+							so clicking the header matches what the dropdown already shows.</li>
+					</ul>
+				</div>
+			</details>
+
+			<details class="release">
+				<summary>
+					<span class="ver">1.2.0</span>
 				</summary>
 				<div class="body">
 					<ul>

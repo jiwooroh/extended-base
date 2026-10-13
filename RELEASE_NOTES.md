@@ -1,48 +1,50 @@
-# Extended Base 1.2.0
+# Extended Base 1.3.0
 
-Pill columns can now be pinned to single- or multi-select, and the
-auto-detected default is smarter about which one fits.
+Hide table columns you don't need right now, keep the same colors in
+Pretty Properties as in your bases, and get sort order that actually
+matches what the dropdown already shows.
 
-## 🆕 Select vs. Multi-select, your choice
+## 🆕 Hide table columns
 
-Right-click a pill column's header in the table view for two new
-options:
+Right-click a column header and choose **Hide column**. A "Hidden
+columns" control appears in the table's footer listing every hidden
+column — click one to bring it back. The title column can't be
+hidden, since a row needs at least that to identify or open the note.
 
-- **Select (single)** — pick one value, select-and-close.
-- **Multi-select** — toggle multiple values, menu stays open.
-- **Auto-detect select type** (once you've overridden it) — clears the
-  override and goes back to automatic.
+## 🆕 Match colors in Pretty Properties
 
-## 🧠 Smarter auto-detection
+If you use the [Pretty Properties](https://github.com/anareaty/pretty-properties)
+plugin, there's a new "Sync pill colors to Pretty Properties" view
+option (off by default, in all four views). Turn it on and a pill's
+resolved color here is also pushed into Pretty Properties' own color
+store — so a note's real property panel, and its inline tags, show the
+exact same color as this view's pills.
 
-Without an override, a pill column now decides single- vs multi-select
-from the data itself: **multi-select once some entry actually holds
-more than one value for it, single-select otherwise.** Previously, any
-property whose vault-level frontmatter type was list-shaped (`tags`,
-`multitext`, …) always defaulted to multi-select, even if every note
-only ever had zero or one value in it. A freshly-created list property
-now starts single-select until a note actually uses it as a real list —
-and you can always pin it either way yourself.
+It's non-destructive: a color you've picked by hand through Pretty
+Properties' own color menu is never overwritten, only values this
+plugin hasn't touched yet (or already synced itself) get written.
+
+## 🧠 Sort now matches the dropdown, not the alphabet
+
+A pill/select column with no explicit drag-to-reorder saved used to
+sort alphabetically by default — even though the select editor's own
+dropdown already lists that column's options in first-seen order, not
+alphabetical. Clicking the header now sorts by that same first-seen
+order instead, so the two finally agree. Drag a row's grip handle in
+the dropdown to set your own order any time; it still wins once set.
 
 ## 🐛 Fixed
 
-- **Grouping by an ordinary property no longer splits on `/`.** A
-  category value like `01_Robots/AI/digital` was being split into a
-  three-level tree of sub-groups — one level per `/`-separated segment
-  — the same nesting meant for real folder hierarchy. Grouping by
-  anything other than `file.folder` is flat again: a value is one
-  group, `/` included, exactly as it reads. (Folder grouping is
-  unaffected — `file.folder` still nests subfolders under their real
-  parent, as before.)
+- **Board card links no longer overflow.** A long, unbroken value like
+  a URL in a board card's property could spill past the card's right
+  edge instead of wrapping onto the next line.
 
 ## Upgrading
 
 Drop-in — no config or `.base` file changes needed. Existing pill
-columns keep working exactly as before unless their auto-detected
-default actually changes (only ones where no entry currently has more
-than one value switch from multi- to single-select) — right-click and
-pin **Multi-select** if you'd rather keep one as-is. If you were
-grouping by a property specifically to get the old `/`-splitting
-behavior, that only applies to `file.folder` now.
+columns may visually re-sort once if they had no explicit order saved
+and their first-seen order differs from alphabetical; drag to set your
+own order any time. The Pretty Properties sync is off by default —
+turn it on per-view if you want it.
 
 See the [full changelog](README.md#changelog) for the complete history.
