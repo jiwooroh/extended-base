@@ -22,7 +22,7 @@ import {
 } from 'obsidian';
 import { LOG_PREFIX, NOTION_TABLE_VIEW } from '../constants';
 import { PinnedColors, applyPillColor, colorByName, resolvePillColor, resolvePillOpacity } from '../lib/colors';
-import { PillDetection, computePillProps, parsePinnedColors, pillLabel, stripPath } from '../lib/pills';
+import { PillDetection, buildDefaultSelectOrder, computePillProps, parsePinnedColors, pillLabel, stripPath } from '../lib/pills';
 import { buildFolderGroups, buildGroupTree, countEntries, GroupNode, hideSoleTopLevelFolder, isGroupedByFolder } from '../lib/groups';
 import { getPropertyIcon, getPropertyMetaType, isEditableProp, propBareName } from '../lib/property-types';
 import { syncPillColorToPrettyProperties } from '../lib/pretty-properties-sync';
@@ -543,11 +543,12 @@ export class NotionTableView extends BasesView {
 	}
 
 	/**
-	 * Compare two entries by one property. Pill/select columns with a
-	 * user-defined option order (see the select editor's drag handles)
-	 * sort by that order instead of alphabetically; numbers and booleans
-	 * compare numerically; everything else falls back to a locale/numeric
-	 * string compare (which also sorts ISO dates correctly).
+	 * Compare two entries by one property. Pill/select columns sort by their
+	 * option order — a user-defined order (the select editor's drag handles)
+	 * if one's been set, otherwise the same first-seen order the select
+	 * editor's dropdown already shows — never alphabetically; numbers and
+	 * booleans compare numerically; everything else falls back to a
+	 * locale/numeric string compare (which also sorts ISO dates correctly).
 	 */
 	private compareEntries(a: BasesEntry, b: BasesEntry, prop: BasesPropertyId): number {
 		const va = a.getValue(prop);
@@ -581,11 +582,18 @@ export class NotionTableView extends BasesView {
 		return va.toString().localeCompare(vb.toString(), undefined, { sensitivity: 'base', numeric: true });
 	}
 
-	/** The user's saved option order for a select/pill property, or null if none is set. */
+	/**
+	 * The option order to sort a select/pill property by: the user's saved
+	 * order if one's been set, otherwise the same first-seen order the
+	 * select editor's dropdown shows for it; null only when the property has
+	 * no known values at all yet.
+	 */
 	private getSelectOrder(prop: BasesPropertyId): string[] | null {
 		const bare = propBareName(prop);
-		const order = this.getSelectOptionOrder(bare);
-		return order.length ? order : null;
+		const stored = this.getSelectOptionOrder(bare);
+		if (stored.length) return stored;
+		const fallback = buildDefaultSelectOrder(this.data.data, prop);
+		return fallback.length ? fallback : null;
 	}
 
 	/** Swap a header title for an inline rename input; Enter/blur commits, Esc cancels. */

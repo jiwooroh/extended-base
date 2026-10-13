@@ -6,6 +6,7 @@
 import { App, BasesEntry, BasesPropertyId, BasesViewConfig, ListValue } from 'obsidian';
 import { PinnedColors, colorByName } from './colors';
 import { propBareName } from './property-types';
+import { valueToStrings } from './values';
 
 /** Result of {@link computePillProps}. */
 export interface PillDetection {
@@ -133,6 +134,28 @@ export function computePillProps(
  */
 export function pillLabel(raw: string): string {
 	return raw.replace(/^#/, '');
+}
+
+/**
+ * Default option order for a pill property with no explicit saved order yet:
+ * first-seen order across the current result, lowercased keys. This is
+ * exactly how the select editor's dropdown lists options before the user has
+ * dragged any of them — so sorting by this column falls back to the same
+ * order the dropdown already shows, not alphabetical.
+ */
+export function buildDefaultSelectOrder(entries: BasesEntry[], prop: BasesPropertyId): string[] {
+	const seen = new Set<string>();
+	const order: string[] = [];
+	for (const entry of entries) {
+		for (const raw of valueToStrings(entry.getValue(prop))) {
+			const key = raw.replace(/^#/, '').toLowerCase();
+			if (key && !seen.has(key)) {
+				seen.add(key);
+				order.push(key);
+			}
+		}
+	}
+	return order;
 }
 
 /** Parse the `pinnedColors` view option (`value=color` entries) into a map. */
