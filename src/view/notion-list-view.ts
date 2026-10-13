@@ -262,9 +262,13 @@ export class NotionListView extends BasesView {
 		}
 
 		// ---- Checkboxes write straight back to frontmatter ----
-		if (value instanceof BooleanValue) {
+		// A checkbox property with nothing set yet comes back as a nullish
+		// value, not a `BooleanValue(false)` — still render it as an
+		// (unchecked) checkbox rather than an empty cell, using the
+		// vault-registered property type to recognize it.
+		if (value instanceof BooleanValue || (isNullish(value) && getPropertyMetaType(this.app, prop) === 'checkbox')) {
 			const cb = td.createEl('input', { type: 'checkbox', cls: 'ntn-checkbox' });
-			cb.checked = value.isTruthy();
+			cb.checked = value instanceof BooleanValue && value.isTruthy();
 			if (editable) {
 				cb.addEventListener('change', () => {
 					void this.writeProperty(entry.file, propName, cb.checked);
