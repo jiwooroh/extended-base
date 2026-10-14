@@ -4,7 +4,7 @@
  * "Set color" menu, so both get the identical picker instead of two
  * near-duplicate implementations.
  */
-import { NOTION_COLORS, NotionColor, applyColorVars } from '../lib/colors';
+import { NotionColor, applyColorVars, getActivePalette } from '../lib/colors';
 
 export interface ColorMenuOptions {
 	/** The view's own document (popout-safe). */
@@ -25,7 +25,7 @@ export interface ColorMenuOptions {
 export function buildColorMenu(opts: ColorMenuOptions): HTMLElement {
 	const menu = opts.doc.body.createDiv({ cls: 'ntn-root ntn-color-menu' });
 
-	const options: { name: string }[] = [{ name: 'default' }, ...NOTION_COLORS];
+	const options: { name: string }[] = [{ name: 'default' }, ...getActivePalette()];
 	for (const c of options) {
 		const item = menu.createDiv({ cls: 'ntn-color-option' });
 		const swatch = item.createSpan({ cls: 'ntn-color-swatch' });
