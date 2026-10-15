@@ -1,50 +1,49 @@
-# Extended Base 1.3.0
+# Extended Base 1.4.0
 
-Hide table columns you don't need right now, keep the same colors in
-Pretty Properties as in your bases, and get sort order that actually
-matches what the dropdown already shows.
+Pick your palette, read list rows without squinting, and a few bugs
+that were quietly getting in the way are gone.
 
-## 🆕 Hide table columns
+## 🆕 Color scheme: Notion or Apple
 
-Right-click a column header and choose **Hide column**. A "Hidden
-columns" control appears in the table's footer listing every hidden
-column — click one to bring it back. The title column can't be
-hidden, since a row needs at least that to identify or open the note.
+A new plugin-wide setting — **Obsidian Settings → Extended Base →
+Color scheme** — not a per-base option, so it applies to every base at
+once. The original 9-color palette is now named **Notion**; pick
+**Apple** instead for the system red/orange/yellow/green/blue/purple/
+pink/gray/brown palette, light and dark mode both included. Switching
+takes effect the next time an already-open base re-renders — switch
+tabs away and back, or just reopen it.
 
-## 🆕 Match colors in Pretty Properties
+## 🆕 List view, stacked vertically
 
-If you use the [Pretty Properties](https://github.com/anareaty/pretty-properties)
-plugin, there's a new "Sync pill colors to Pretty Properties" view
-option (off by default, in all four views). Turn it on and a pill's
-resolved color here is also pushed into Pretty Properties' own color
-store — so a note's real property panel, and its inline tags, show the
-exact same color as this view's pills.
+Each row now shows the title on its own line, then every other
+property on its own line below it (a small property icon plus its
+value) — instead of cramming properties into a horizontal strip next
+to the title, where most of them had no room to actually be read.
 
-It's non-destructive: a color you've picked by hand through Pretty
-Properties' own color menu is never overwritten, only values this
-plugin hasn't touched yet (or already synced itself) get written.
+## 🆕 Board card property labels
 
-## 🧠 Sort now matches the dropdown, not the alphabet
-
-A pill/select column with no explicit drag-to-reorder saved used to
-sort alphabetically by default — even though the select editor's own
-dropdown already lists that column's options in first-seen order, not
-alphabetical. Clicking the header now sorts by that same first-seen
-order instead, so the two finally agree. Drag a row's grip handle in
-the dropdown to set your own order any time; it still wins once set.
+A new "Show a card property's name as" view option for the board view:
+**Icon + name**, **Icon only**, **Name only**, or **None** (the
+default — nothing changes unless you turn it on).
 
 ## 🐛 Fixed
 
-- **Board card links no longer overflow.** A long, unbroken value like
-  a URL in a board card's property could spill past the card's right
-  edge instead of wrapping onto the next line.
+- **Checkbox properties with nothing set now actually show up.** A
+  checkbox with no value on a note came back as "nothing" rather than
+  an unchecked `false`, so the table/list/board cell silently rendered
+  empty instead of an actual checkbox you could click.
+- **Resized columns can now shrink all the way to icon width.** A
+  table column could never shrink below its full label's width, even
+  with the label visually truncated — that's just how HTML tables
+  work, `min-width` or not. Dragging one narrow now hides the label
+  outright below ~48px, so the column keeps shrinking down to just its
+  icon, the way it should've all along.
 
 ## Upgrading
 
-Drop-in — no config or `.base` file changes needed. Existing pill
-columns may visually re-sort once if they had no explicit order saved
-and their first-seen order differs from alphabetical; drag to set your
-own order any time. The Pretty Properties sync is off by default —
-turn it on per-view if you want it.
+Drop-in — no config or `.base` file changes needed. The color scheme
+defaults to **Notion**, so nothing looks different until you open
+Settings and switch it. List view rows will look different right away
+— that's the intended layout change, not a bug.
 
 See the [full changelog](README.md#changelog) for the complete history.

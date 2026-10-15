@@ -163,8 +163,48 @@
 
 			<details class="release" open>
 				<summary>
-					<span class="ver">1.3.0</span>
+					<span class="ver">1.4.0</span>
 					<span class="tag">Latest</span>
+				</summary>
+				<div class="body">
+					<ul>
+						<li>Added: a plugin-wide <strong>Color scheme</strong> setting
+							(Obsidian Settings → Extended Base, not a per-base option)
+							choosing which 9-color palette pills are drawn from. The
+							original palette is now named <strong>Notion</strong>; a new
+							<strong>Apple</strong> palette (system red/orange/yellow/green/
+							blue/purple/pink/gray/brown, light + dark) is selectable
+							alongside it, across every base.</li>
+						<li>Added: a "Show a card property's name as" view option for
+							the board view — <strong>Icon + name</strong>,
+							<strong>Icon only</strong>, <strong>Name only</strong>, or
+							<strong>None</strong> (default, unchanged behavior) — shown
+							ahead of each card property's value.</li>
+						<li>Changed: the list view now stacks each row vertically — the
+							title on its own line, then every other property on its own
+							line below it (a small property icon plus its value) —
+							instead of cramming properties into a horizontal strip next to
+							the title, which left little room to actually read any of
+							them.</li>
+						<li>Fixed: a checkbox property with nothing set on a note came
+							back as a nullish value, not <code>BooleanValue(false)</code>
+							— the table/list/board cell render only recognized the latter,
+							so an unchecked (or never-touched) checkbox silently rendered
+							as an empty cell instead of an actual checkbox control.</li>
+						<li>Fixed: dragging a table column narrower couldn't shrink it
+							past its label's full width, even with the label visually
+							truncated — an HTML table can never shrink a column below its
+							nowrap text's rendered width, no matter what
+							<code>min-width</code> says. The label now hides outright below
+							~48px instead of just clipping, so the column keeps shrinking
+							down to just its icon.</li>
+					</ul>
+				</div>
+			</details>
+
+			<details class="release">
+				<summary>
+					<span class="ver">1.3.0</span>
 				</summary>
 				<div class="body">
 					<ul>

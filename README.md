@@ -59,8 +59,10 @@ The full database grid.
 
 ### Notion List
 
-A compact one-line-per-note layout: the note title on the left, its
-properties on the right. Same grouping (including folder grouping),
+Each row stacks vertically: the note title on its own line, then every
+other property on its own line below it (a small property icon plus
+its value) — not a horizontal strip, which left little room to
+actually read any of them. Same grouping (including folder grouping),
 pills, and inline editing as the table, minus the grid. The *Row count
 limit* view option decides how many rows to draw (`0` or `all` for no
 limit).
@@ -85,6 +87,9 @@ one card per note.
   *Hidden groups* view option.) The **Show group color as** view option
   controls whether a group's color shows as its heading's pill, a faint
   wash across the whole column, both, or neither.
+- **Show a card property's name as** — a view option controlling whether
+  each card property shows its icon, its name, both, or neither (the
+  default) ahead of its value.
 - **Folder grouping** gets its own layout, consistent with the table and
   list views — see the next section. Board columns stay one-per-top-level-
   folder even when a vault's folders nest several levels deep; a
@@ -238,6 +243,11 @@ then opens the panel instead of a tab (Ctrl/Cmd-click still opens a tab):
   inline tags) shows the same color as this view's pills. Never
   overwrites a color you picked by hand through Pretty Properties' own
   color menu.
+- **Color scheme** — a plugin-wide setting (Obsidian Settings →
+  Extended Base, not a per-base option) choosing which 9-color palette
+  pills are drawn from: the original **Notion** palette, or a new
+  **Apple** palette (system red/orange/yellow/green/blue/purple/pink/
+  gray/brown, light + dark). Applies everywhere, across every base.
 
 ## Usage
 
@@ -259,6 +269,7 @@ then opens the panel instead of a tab (Ctrl/Cmd-click still opens a tab):
 | Icon property | ✅ | ✅ | ✅ | ✅ |
 | Hidden groups | | | ✅ | |
 | Hidden columns (right-click a header) | ✅ | | | |
+| Show a card property's name as | | | ✅ | |
 | Properties to show as colored pills | ✅ | ✅ | ✅ | ✅ |
 | Pinned pill colors | ✅ | ✅ | ✅ | ✅ |
 | Sync pill colors to Pretty Properties | ✅ | ✅ | ✅ | ✅ |
@@ -267,6 +278,11 @@ Column widths, order, sort, icons, renamed headers, per-column wrapping,
 per-column color toggles, and per-column select-type overrides are all set
 directly on the table (drag / click / double-click / right-click) and
 persist in the view config.
+
+**Color scheme** is the one setting that isn't per-base: it lives in
+Obsidian's own Settings pane under **Extended Base**, and applies to
+every base at once. Switching it takes effect the next time an already-
+open base re-renders (switch tabs away and back, or reopen it).
 
 Notes on editing:
 
@@ -346,6 +362,35 @@ Source layout:
 - ⚪️ **Gallery view** — card galleries with cover images.
 
 ## Changelog
+
+### 1.4.0
+
+- **Added:** a plugin-wide **Color scheme** setting (Obsidian Settings
+  → Extended Base, not a per-base option) choosing which 9-color
+  palette pills are drawn from. The original palette is now named
+  **Notion**; a new **Apple** palette (system red/orange/yellow/
+  green/blue/purple/pink/gray/brown, light + dark) is selectable
+  alongside it, across every base.
+- **Added:** a "Show a card property's name as" view option for the
+  board view — **Icon + name**, **Icon only**, **Name only**, or
+  **None** (default, unchanged behavior) — shown ahead of each card
+  property's value.
+- **Changed:** the list view now stacks each row vertically — the
+  title on its own line, then every other property on its own line
+  below it (a small property icon plus its value) — instead of
+  cramming properties into a horizontal strip next to the title, which
+  left little room to actually read any of them.
+- **Fixed:** a checkbox property with nothing set on a note came back
+  as a nullish value, not `BooleanValue(false)` — the table/list/board
+  cell render only recognized the latter, so an unchecked (or
+  never-touched) checkbox silently rendered as an empty cell instead
+  of an actual checkbox control.
+- **Fixed:** dragging a table column narrower couldn't shrink it past
+  its label's full width, even with the label visually truncated —
+  an HTML table can never shrink a column below its nowrap text's
+  rendered width, no matter what `min-width` says. The label now hides
+  outright below ~48px instead of just clipping, so the column keeps
+  shrinking down to just its icon.
 
 ### 1.3.0
 
