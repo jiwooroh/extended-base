@@ -186,6 +186,18 @@ export function buildBoardViewOptions(_config: BasesViewConfig): BasesAllOptions
 		},
 		{
 			type: 'dropdown',
+			key: 'propertyLabelDisplay',
+			displayName: "Show a card property's name as",
+			default: 'none',
+			options: {
+				'icon-name': 'Icon + name',
+				icon: 'Icon only',
+				name: 'Name only',
+				none: 'None',
+			},
+		},
+		{
+			type: 'dropdown',
 			key: 'openMode',
 			displayName: 'Open notes in',
 			default: 'tab',

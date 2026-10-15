@@ -167,6 +167,14 @@
 	text-overflow: ellipsis;
 }
 
+/* Set by NotionTableView.applyColumnWidth once a dragged column is too
+   narrow to show the label — display:none (not just visual clipping) so
+   the table's own auto-layout min-content calculation drops it too,
+   letting the column keep shrinking down to just its icon. */
+.ntn-th-text-hidden {
+	display: none;
+}
+
 /* Dragged header: dim it while a drop target elsewhere shows where it lands. */
 .ntn-th-dragging {
 	opacity: 0.5;
@@ -1217,27 +1225,29 @@
 	gap: 0;
 }
 
+/* Each row stacks vertically: a title line, then every other property on
+   its own line below (icon + value) — not a horizontal strip, which left
+   little room for any property to actually be read. */
 .ntn-list-row {
 	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	padding: 8px 12px;
+	flex-direction: column;
+	gap: 4px;
+	padding: 10px 12px;
 	border-bottom: 1px solid var(--ntn-border);
 	transition: background 20ms ease-in;
+	/* The indented case sets padding-left inline (per-row, higher
+	   specificity than any selector here) — this is just the fallback. */
+	padding-left: 12px;
 }
 
 .ntn-list-row:hover {
 	background: var(--ntn-hover);
 }
 
-.ntn-list-left {
-	flex: 1;
+.ntn-list-title-row {
 	min-width: 0;
 	display: flex;
 	align-items: center;
-	/* The indented case sets padding-left inline (per-row, higher
-	   specificity than any selector here) — this is just the fallback. */
-	padding-left: 0;
 }
 
 .ntn-list-container .ntn-group-row {
@@ -1250,16 +1260,40 @@
 	padding: 8px 12px;
 }
 
-.ntn-list-right {
+.ntn-list-props {
 	display: flex;
-	align-items: center;
-	gap: 16px;
-	flex-shrink: 0;
+	flex-direction: column;
+	gap: 4px;
+	/* Lines up under the title text, past its icon. */
+	padding-left: 22px;
 }
 
-.ntn-list-cell {
+.ntn-list-prop-row {
 	display: flex;
 	align-items: center;
+	gap: 8px;
+	min-width: 0;
+	font-size: 13px;
+}
+
+.ntn-list-prop-icon {
+	display: inline-flex;
+	align-items: center;
+	flex-shrink: 0;
+	opacity: 0.7;
+	color: var(--ntn-text-muted);
+}
+
+.ntn-list-prop-icon svg {
+	width: 13px;
+	height: 13px;
+}
+
+.ntn-list-prop-value {
+	display: flex;
+	align-items: center;
+	min-width: 0;
+	flex: 1;
 }
 
 /* ============================================================
@@ -1403,6 +1437,34 @@
 .ntn-board-cell {
 	display: flex;
 	align-items: center;
+	gap: 6px;
+	min-width: 0;
+}
+
+.ntn-board-cell-label {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	flex-shrink: 0;
+	color: var(--ntn-text-muted);
+	opacity: 0.8;
+}
+
+.ntn-board-cell-icon {
+	display: inline-flex;
+	align-items: center;
+}
+
+.ntn-board-cell-icon svg {
+	width: 13px;
+	height: 13px;
+}
+
+.ntn-board-cell-value {
+	display: flex;
+	align-items: center;
+	min-width: 0;
+	flex: 1;
 }
 
 .ntn-board-card .ntn-cell.ntn-cell,

@@ -17,12 +17,13 @@ import {
 	TFile,
 	Menu,
 	MarkdownRenderer,
+	setIcon,
 } from 'obsidian';
 import { LOG_PREFIX, NOTION_BOARD_VIEW } from '../constants';
 import { PinnedColors, applyPillColor, colorByName, resolvePillColor, resolvePillOpacity } from '../lib/colors';
 import { PillDetection, computePillProps, parsePinnedColors, pillLabel, stripPath } from '../lib/pills';
 import { buildFolderGroups, GroupNode, hideSoleTopLevelFolder, isGroupedByFolder } from '../lib/groups';
-import { getPropertyMetaType, isEditableProp, propBareName } from '../lib/property-types';
+import { getPropertyIcon, getPropertyMetaType, isEditableProp, propBareName } from '../lib/property-types';
 import { syncPillColorToPrettyProperties } from '../lib/pretty-properties-sync';
 import { renamePillValue } from '../lib/rename';
 import { TitleIconConfig, readTitleIconConfig, renderTitleIcon } from '../lib/title-icon';
@@ -55,6 +56,8 @@ export class NotionBoardView extends BasesView {
 	private titleIconCfg: TitleIconConfig = { show: true, property: 'icon' };
 	/** Whether to also push pill colors into the Pretty Properties plugin (the `syncPrettyProperties` view option). */
 	private syncPP = false;
+	/** How a card property's name renders next to its value (the `propertyLabelDisplay` view option). */
+	private propertyLabelDisplay: 'icon-name' | 'icon' | 'name' | 'none' = 'none';
 	/** The open select editor, if any (also drives outside-click detection). */
 	private selectEditor: SelectEditor | null = null;
 	/** Set of subgroup full keys (nested folders within a column) that are currently collapsed. */
@@ -139,6 +142,9 @@ export class NotionBoardView extends BasesView {
 		this.pinnedColors = parsePinnedColors(this.config.get('pinnedColors'));
 		this.titleIconCfg = readTitleIconConfig(this.config);
 		this.syncPP = this.config.get('syncPrettyProperties') === true;
+		const labelDisplay = this.config.get('propertyLabelDisplay');
+		this.propertyLabelDisplay = labelDisplay === 'icon-name' || labelDisplay === 'icon' || labelDisplay === 'name'
+			? labelDisplay : 'none';
 
 		const boardContainer = root.createDiv({ cls: 'ntn-board-container' });
 
@@ -355,7 +361,27 @@ export class NotionBoardView extends BasesView {
 		const propsWrap = cardEl.createDiv({ cls: 'ntn-board-card-props' });
 		for (const prop of visibleProps) {
 			const cellWrap = propsWrap.createDiv({ cls: 'ntn-board-cell' });
-			this.renderCell(cellWrap, entry, prop);
+			this.renderPropertyLabel(cellWrap, prop);
+			const valueWrap = cellWrap.createDiv({ cls: 'ntn-board-cell-value' });
+			this.renderCell(valueWrap, entry, prop);
+		}
+	}
+
+	/**
+	 * A property's icon and/or name, shown ahead of its value per the
+	 * `propertyLabelDisplay` view option — off (`none`) by default, since a
+	 * board card is already tight on space and the property's own value
+	 * (a pill, a date, …) is often self-explanatory without it.
+	 */
+	private renderPropertyLabel(cellWrap: HTMLElement, prop: BasesPropertyId): void {
+		if (this.propertyLabelDisplay === 'none') return;
+		const labelWrap = cellWrap.createDiv({ cls: 'ntn-board-cell-label' });
+		if (this.propertyLabelDisplay === 'icon' || this.propertyLabelDisplay === 'icon-name') {
+			const iconSpan = labelWrap.createSpan({ cls: 'ntn-board-cell-icon' });
+			setIcon(iconSpan, getPropertyIcon(this.app, prop));
+		}
+		if (this.propertyLabelDisplay === 'name' || this.propertyLabelDisplay === 'icon-name') {
+			labelWrap.createSpan({ cls: 'ntn-board-cell-label-text', text: this.config.getDisplayName(prop) });
 		}
 	}
 
@@ -371,6 +397,7 @@ export class NotionBoardView extends BasesView {
 		const value = entry.getValue(prop);
 		if (this.pills.pillProps.has(prop)) return valueToStrings(value).length === 0;
 		if (value instanceof BooleanValue) return false;
+		if (isNullish(value) && getPropertyMetaType(this.app, prop) === 'checkbox') return false;
 		return isNullish(value);
 	}
 
@@ -429,9 +456,13 @@ export class NotionBoardView extends BasesView {
 		}
 
 		// ---- Checkboxes write straight back to frontmatter ----
-		if (value instanceof BooleanValue) {
+		// A checkbox property with nothing set yet comes back as a nullish
+		// value, not a `BooleanValue(false)` — still render it as an
+		// (unchecked) checkbox rather than an empty cell, using the
+		// vault-registered property type to recognize it.
+		if (value instanceof BooleanValue || (isNullish(value) && getPropertyMetaType(this.app, prop) === 'checkbox')) {
 			const cb = td.createEl('input', { type: 'checkbox', cls: 'ntn-checkbox' });
-			cb.checked = value.isTruthy();
+			cb.checked = value instanceof BooleanValue && value.isTruthy();
 			if (editable) {
 				cb.addEventListener('change', () => {
 					void this.writeProperty(entry.file, propName, cb.checked);

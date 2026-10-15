@@ -5,6 +5,9 @@
  */
 import { Notice, Plugin } from 'obsidian';
 import { NOTION_TABLE_VIEW, NOTION_LIST_VIEW, NOTION_BOARD_VIEW, NOTION_FEED_VIEW } from './constants';
+import { setColorScheme } from './lib/colors';
+import { DEFAULT_SETTINGS, ExtendedBaseSettings } from './settings';
+import { ExtendedBaseSettingTab } from './settings-tab';
 import { buildViewOptions, buildListViewOptions, buildBoardViewOptions, buildFeedViewOptions } from './view-options';
 import { NotionTableView } from './view/notion-table-view';
 import { NotionListView } from './view/notion-list-view';
@@ -12,7 +15,13 @@ import { NotionBoardView } from './view/notion-board-view';
 import { NotionFeedView } from './view/notion-feed-view';
 
 export default class NotionBasesPlugin extends Plugin {
+	settings: ExtendedBaseSettings = DEFAULT_SETTINGS;
+
 	async onload() {
+		await this.loadSettings();
+		setColorScheme(this.settings.colorScheme);
+		this.addSettingTab(new ExtendedBaseSettingTab(this.app, this));
+
 		if (typeof this.registerBasesView !== 'function') {
 			new Notice('Extended Base: requires Obsidian 1.10.0+ (registerBasesView API missing).', 8000);
 			return;
@@ -55,5 +64,22 @@ export default class NotionBasesPlugin extends Plugin {
 				8000,
 			);
 		}
+	}
+
+	async loadSettings(): Promise<void> {
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+	}
+
+	/**
+	 * Switch the active color scheme and persist it. There's no documented
+	 * way to force an already-open base to re-render from here, so this
+	 * takes effect the next time one does on its own (switching tabs,
+	 * editing a note, reopening it).
+	 */
+	async setColorScheme(id: string): Promise<void> {
+		this.settings.colorScheme = id;
+		await this.saveData(this.settings);
+		setColorScheme(id);
+		new Notice('Extended Base: switch to another tab and back (or reopen the base) to see the new colors.');
 	}
 }

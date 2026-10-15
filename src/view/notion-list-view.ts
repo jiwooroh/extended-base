@@ -16,12 +16,13 @@ import {
 	QueryController,
 	TFile,
 	MarkdownRenderer,
+	setIcon,
 } from 'obsidian';
 import { LOG_PREFIX, NOTION_LIST_VIEW } from '../constants';
 import { PinnedColors, applyPillColor, colorByName, resolvePillColor, resolvePillOpacity } from '../lib/colors';
 import { PillDetection, computePillProps, parsePinnedColors, pillLabel, stripPath } from '../lib/pills';
 import { buildFolderGroups, buildGroupTree, countEntries, GroupNode, hideSoleTopLevelFolder, isGroupedByFolder } from '../lib/groups';
-import { getPropertyMetaType, isEditableProp, propBareName } from '../lib/property-types';
+import { getPropertyIcon, getPropertyMetaType, isEditableProp, propBareName } from '../lib/property-types';
 import { syncPillColorToPrettyProperties } from '../lib/pretty-properties-sync';
 import { renamePillValue } from '../lib/rename';
 import { TitleIconConfig, readTitleIconConfig, renderTitleIcon } from '../lib/title-icon';
@@ -161,9 +162,8 @@ export class NotionListView extends BasesView {
 				const rowEl = this.renderRow(listContainer, entry, props);
 				if (node.key) {
 					// Indent entries slightly more than their group header
-					const leftEl = rowEl.querySelector<HTMLElement>('.ntn-list-left');
 					const entryIndent = folderGrouped ? (depth > 0 ? 52 : 32) : (depth * 20) + 30;
-					leftEl?.setCssStyles({ paddingLeft: `${entryIndent}px` });
+					rowEl.setCssStyles({ paddingLeft: `${entryIndent}px` });
 				}
 				renderedCount++;
 			}
@@ -187,22 +187,31 @@ export class NotionListView extends BasesView {
 		newRow.addEventListener('click', () => void this.createAndOpenPage());
 	}
 
+	/**
+	 * Each row stacks vertically — title on its own line, then every other
+	 * property on its own line below (icon + value), Notion-list-style —
+	 * rather than cramming properties into a horizontal row next to the
+	 * title, which left little room for any of them to actually be read.
+	 */
 	private renderRow(
 		container: HTMLElement,
 		entry: BasesEntry,
 		props: BasesPropertyId[],
 	): HTMLElement {
 		const rowEl = container.createDiv({ cls: 'ntn-list-row' });
-		const leftEl = rowEl.createDiv({ cls: 'ntn-list-left' });
-		const rightEl = rowEl.createDiv({ cls: 'ntn-list-right' });
+		const titleRow = rowEl.createDiv({ cls: 'ntn-list-title-row' });
+		this.renderCell(titleRow, entry, 'file.name');
 
-		// Always render title on the left
-		this.renderCell(leftEl, entry, 'file.name');
-
-		for (const prop of props) {
-			if (prop === 'file.name') continue; // Title already rendered on left
-			const cellWrap = rightEl.createDiv({ cls: 'ntn-list-cell' });
-			this.renderCell(cellWrap, entry, prop);
+		const visibleProps = props.filter((prop) => prop !== 'file.name');
+		if (visibleProps.length) {
+			const propsWrap = rowEl.createDiv({ cls: 'ntn-list-props' });
+			for (const prop of visibleProps) {
+				const propRow = propsWrap.createDiv({ cls: 'ntn-list-prop-row' });
+				const iconSpan = propRow.createSpan({ cls: 'ntn-list-prop-icon' });
+				setIcon(iconSpan, getPropertyIcon(this.app, prop));
+				const valueWrap = propRow.createDiv({ cls: 'ntn-list-prop-value' });
+				this.renderCell(valueWrap, entry, prop);
+			}
 		}
 		return rowEl;
 	}
@@ -262,9 +271,13 @@ export class NotionListView extends BasesView {
 		}
 
 		// ---- Checkboxes write straight back to frontmatter ----
-		if (value instanceof BooleanValue) {
+		// A checkbox property with nothing set yet comes back as a nullish
+		// value, not a `BooleanValue(false)` — still render it as an
+		// (unchecked) checkbox rather than an empty cell, using the
+		// vault-registered property type to recognize it.
+		if (value instanceof BooleanValue || (isNullish(value) && getPropertyMetaType(this.app, prop) === 'checkbox')) {
 			const cb = td.createEl('input', { type: 'checkbox', cls: 'ntn-checkbox' });
-			cb.checked = value.isTruthy();
+			cb.checked = value instanceof BooleanValue && value.isTruthy();
 			if (editable) {
 				cb.addEventListener('change', () => {
 					void this.writeProperty(entry.file, propName, cb.checked);

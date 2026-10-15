@@ -28,7 +28,7 @@ export type PinnedColors = Map<string, PinnedColorEntry>;
  * Notion's official color palette (light/dark background + text pairs).
  * Backgrounds and text differ per theme.
  */
-export const NOTION_COLORS: NotionColor[] = [
+export const NOTION_PALETTE: NotionColor[] = [
 	{ name: 'gray',   lightBg: '#F1F1EF', lightFg: '#787774', darkBg: '#3C4144', darkFg: '#9FA4A8' },
 	{ name: 'brown',  lightBg: '#F4EEEE', lightFg: '#9E6B53', darkBg: '#4C3E35', darkFg: '#D49675' },
 	{ name: 'orange', lightBg: '#FBEDE7', lightFg: '#C86F21', darkBg: '#553B29', darkFg: '#E98D36' },
@@ -40,18 +40,59 @@ export const NOTION_COLORS: NotionColor[] = [
 	{ name: 'red',    lightBg: '#FDEBEC', lightFg: '#D34C47', darkBg: '#5E3436', darkFg: '#EA878C' },
 ];
 
+/**
+ * Apple's system color palette (light/dark background + text pairs). The
+ * background hexes carry their own alpha channel (8-digit hex, e.g.
+ * `#FF3B3026`) rather than a separate opacity value — valid CSS as-is, and
+ * `applyColorVars`'s `color-mix` still composes correctly on top of it when
+ * the user also pins a lower opacity.
+ */
+export const APPLE_PALETTE: NotionColor[] = [
+	{ name: 'gray',   lightBg: '#8E8E9326', lightFg: '#8E8E93', darkBg: '#ABABAF33', darkFg: '#ABABAF' },
+	{ name: 'brown',  lightBg: '#A2845E26', lightFg: '#A2845E', darkBg: '#B8A28633', darkFg: '#B8A286' },
+	{ name: 'orange', lightBg: '#FF950026', lightFg: '#FF9500', darkBg: '#F4AE4333', darkFg: '#F4AE43' },
+	{ name: 'yellow', lightBg: '#F0B00033', lightFg: '#F0B000', darkBg: '#FADB3C33', darkFg: '#FADB3C' },
+	{ name: 'green',  lightBg: '#30B35026', lightFg: '#30B350', darkBg: '#5CD07933', darkFg: '#5CD079' },
+	{ name: 'blue',   lightBg: '#007AFF26', lightFg: '#007AFF', darkBg: '#429AF333', darkFg: '#429AF3' },
+	{ name: 'purple', lightBg: '#AF52DE26', lightFg: '#AF52DE', darkBg: '#C980ED33', darkFg: '#C980ED' },
+	{ name: 'pink',   lightBg: '#FF2D5526', lightFg: '#FF2D55', darkBg: '#F3638033', darkFg: '#F36380' },
+	{ name: 'red',    lightBg: '#FF3B3026', lightFg: '#FF3B30', darkBg: '#F26C6433', darkFg: '#F26C64' },
+];
+
+/** The color schemes selectable from the plugin's settings tab. */
+export const COLOR_SCHEMES: Record<string, { label: string; palette: NotionColor[] }> = {
+	notion: { label: 'Notion', palette: NOTION_PALETTE },
+	apple: { label: 'Apple', palette: APPLE_PALETTE },
+};
+
+export const DEFAULT_COLOR_SCHEME = 'notion';
+
+/** The scheme every color-resolution helper below draws from; switched at plugin load and whenever the "Color scheme" setting changes. */
+let activeSchemeId: string = DEFAULT_COLOR_SCHEME;
+
+/** Switch the active color scheme by id (falls back to Notion for an unknown id). */
+export function setColorScheme(id: string): void {
+	activeSchemeId = COLOR_SCHEMES[id] ? id : DEFAULT_COLOR_SCHEME;
+}
+
+/** The currently active palette (Notion by default). */
+export function getActivePalette(): NotionColor[] {
+	return COLOR_SCHEMES[activeSchemeId]?.palette ?? NOTION_PALETTE;
+}
+
 /** Deterministic color per tag string so pills stay stable across renders. */
 export function colorFor(text: string): NotionColor {
 	let h = 0;
 	for (let i = 0; i < text.length; i++) {
 		h = (h * 31 + text.charCodeAt(i)) >>> 0;
 	}
-	return NOTION_COLORS[h % NOTION_COLORS.length];
+	const palette = getActivePalette();
+	return palette[h % palette.length];
 }
 
-/** Look up a palette entry by its Notion name (e.g. `"green"`); undefined if unknown. */
+/** Look up the active palette's entry by its color name (e.g. `"green"`); undefined if unknown. */
 export function colorByName(name: string): NotionColor | undefined {
-	return NOTION_COLORS.find((c) => c.name === name);
+	return getActivePalette().find((c) => c.name === name);
 }
 
 /** Normalize a pill value for color lookup: drop a leading `#`, lowercase. */

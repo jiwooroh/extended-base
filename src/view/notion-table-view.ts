@@ -369,7 +369,19 @@ export class NotionTableView extends BasesView {
 		const widths = this.config.get('columnWidths') as Record<string, number> || {};
 		// Width lives in a CSS variable the stylesheet reads, so the element
 		// carries no inline width/min-width of its own.
-		const setWidth = (px: number) => th.setCssProps({ '--ntn-col-width': `${px}px` });
+		const titleText = th.querySelector<HTMLElement>('.ntn-th-title-text');
+		// A table with table-layout:auto can never shrink a column below its
+		// own nowrap text's rendered width — min-width on the cell is only a
+		// hint auto-layout is free to ignore, not a hard cap. So instead of
+		// just visually truncating it, hide the label outright (not merely
+		// clip it) once a dragged column gets this narrow — a display:none
+		// element drops out of auto-layout's min-content calculation
+		// entirely, letting the column keep shrinking down to just the icon.
+		const TEXT_HIDE_WIDTH = 48;
+		const setWidth = (px: number) => {
+			th.setCssProps({ '--ntn-col-width': `${px}px` });
+			titleText?.toggleClass('ntn-th-text-hidden', px > 0 && px < TEXT_HIDE_WIDTH);
+		};
 		let width = widths[propId] ?? 0;
 		if (width) setWidth(width);
 
@@ -381,7 +393,9 @@ export class NotionTableView extends BasesView {
 		const moveHandler = (ev: PointerEvent) => {
 			if (!isResizing) return;
 			const dx = ev.clientX - startX;
-			width = Math.max(20, startW + dx);
+			// Floored at roughly icon + padding, not 0 — a column narrower
+			// than its own icon would hide that too, leaving nothing to grab.
+			width = Math.max(36, startW + dx);
 			setWidth(width);
 		};
 
@@ -752,9 +766,13 @@ export class NotionTableView extends BasesView {
 		}
 
 		// ---- Checkboxes write straight back to frontmatter ----
-		if (value instanceof BooleanValue) {
+		// A checkbox property with nothing set yet comes back as a nullish
+		// value, not a `BooleanValue(false)` — still render it as an
+		// (unchecked) checkbox rather than an empty cell, using the
+		// vault-registered property type to recognize it.
+		if (value instanceof BooleanValue || (isNullish(value) && getPropertyMetaType(this.app, prop) === 'checkbox')) {
 			const cb = td.createEl('input', { type: 'checkbox', cls: 'ntn-checkbox' });
-			cb.checked = value.isTruthy();
+			cb.checked = value instanceof BooleanValue && value.isTruthy();
 			if (editable) {
 				cb.addEventListener('change', () => {
 					void this.writeProperty(entry.file, propName, cb.checked);
