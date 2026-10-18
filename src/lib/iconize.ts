@@ -13,25 +13,24 @@
  * A non-emoji icon name is `<packPrefix><IconName>` (e.g. `LiSmile` for
  * Lucide's "smile", `BoBxsCircle` for Boxicons-solid's "circle" — Iconize
  * supports many icon packs beyond Lucide, so Obsidian's own Lucide-only
- * `setIcon` can't render most of them). Instead this looks the icon up the
- * same way Iconize itself does — across every pack it has loaded — and
- * returns that pack's own `<svg>` markup directly.
+ * `setIcon` can't render most of them). {@link getIconizeSvg} mirrors
+ * Iconize's own `getIconByName` lookup (prefix → loaded pack → icon by
+ * name) so this resolves the same way Iconize itself would, for any pack
+ * it has loaded.
  */
 import { App } from 'obsidian';
 
 interface IconizeIcon {
 	name: string;
-	prefix: string;
 	svgElement: string;
 }
 
 interface IconizeIconPack {
-	getIcons(): IconizeIcon[];
+	getIcon(name: string): IconizeIcon | undefined;
 }
 
 interface IconizeIconPackManager {
-	getPreloadedIcons(): IconizeIcon[];
-	getIconPacks(): IconizeIconPack[];
+	getIconPackByPrefix(prefix: string): IconizeIconPack | undefined;
 }
 
 interface IconizePluginLike {
@@ -68,40 +67,34 @@ function splitIconPackName(value: string): { prefix: string; name: string } | nu
 	return i < value.length ? { prefix: value.slice(0, i), name: value.slice(i) } : null;
 }
 
-/** Iconize's own `getNormalizedName`: `-`/`_`/` `-separated words → PascalCase. */
-function normalizeName(s: string): string {
-	return s
-		.split(/[ _-]/g)
-		.map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-		.join('');
-}
-
 /**
- * The real `<svg>...</svg>` markup for a raw Iconize icon name, searched
- * across every icon pack Iconize has loaded (Lucide included) the same way
- * Iconize resolves one for its own sidebar/title icons. Undefined when
- * Iconize isn't installed, the name has no pack prefix to look up (a bare
- * emoji character), or no loaded pack has a matching icon (the pack isn't
- * downloaded/enabled).
+ * The real `<svg>...</svg>` markup for a raw Iconize icon name — the same
+ * lookup Iconize's own `getIconByName` does (prefix → the loaded pack with
+ * that prefix → the icon by name within it). Undefined when Iconize isn't
+ * installed, the name has no pack prefix (a bare emoji character), the
+ * pack isn't currently loaded, or that pack has no icon by that name.
  */
 export function getIconizeSvg(app: App, rawName: string): string | undefined {
+	const split = splitIconPackName(rawName);
+	if (!split) return undefined;
+
 	const manager = getIconizePlugin(app)?.getIconPackManager?.();
-	const split = manager && splitIconPackName(rawName);
-	if (!manager || !split) return undefined;
-
-	const prefix = split.prefix.toLowerCase();
-	const name = split.name.toLowerCase();
-
-	const direct = manager.getPreloadedIcons().find(
-		(icon) => icon.prefix.toLowerCase() === prefix && icon.name.toLowerCase() === name,
-	);
-	if (direct) return direct.svgElement;
-
-	for (const pack of manager.getIconPacks()) {
-		const icon = pack.getIcons().find(
-			(icon) => icon.prefix.toLowerCase() === prefix && normalizeName(icon.name).toLowerCase() === name,
+	const pack = manager?.getIconPackByPrefix?.(split.prefix);
+	if (!pack) {
+		console.warn(
+			`[Extended Base] Iconize icon "${rawName}": no loaded icon pack has prefix "${split.prefix}". ` +
+			'The pack may not be downloaded, enabled, or finished loading yet.',
 		);
-		if (icon) return icon.svgElement;
+		return undefined;
 	}
-	return undefined;
+
+	const icon = pack.getIcon(split.name);
+	if (!icon) {
+		console.warn(
+			`[Extended Base] Iconize icon "${rawName}": pack "${split.prefix}" is loaded but has no icon named "${split.name}".`,
+		);
+		return undefined;
+	}
+
+	return icon.svgElement;
 }
