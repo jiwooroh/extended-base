@@ -12,7 +12,7 @@
  * default Iconize itself shows for a file with no icon).
  */
 import { App, BasesEntry, BasesViewConfig, setIcon } from 'obsidian';
-import { getIconizeIconName, toLucideId } from './iconize';
+import { getIconizeIconName, getIconizeSvg } from './iconize';
 
 export interface TitleIconConfig {
 	/** The `showTitleIcon` master toggle — false hides the icon entirely. */
@@ -29,9 +29,9 @@ export function readTitleIconConfig(config: BasesViewConfig): TitleIconConfig {
 
 /**
  * The icon at the head of a title: this note's own icon as Iconize has it
- * assigned (an emoji renders as the text it is; a Lucide icon name renders
- * as the real glyph), or a plain document icon for a note with nothing
- * assigned there.
+ * assigned — the real icon-pack SVG Iconize itself would draw (any pack,
+ * not just Lucide), or the literal character for an emoji — or a plain
+ * document icon for a note with nothing assigned there.
  */
 export function renderTitleIcon(wrap: HTMLElement, cfg: TitleIconConfig, app: App, entry: BasesEntry): void {
 	if (!cfg.show) return;
@@ -39,7 +39,14 @@ export function renderTitleIcon(wrap: HTMLElement, cfg: TitleIconConfig, app: Ap
 
 	const raw = getIconizeIconName(app, entry.file.path);
 	if (raw) {
-		if (setLucideIcon(el, toLucideId(raw))) return;
+		const svg = getIconizeSvg(app, raw);
+		if (svg) {
+			el.addClass('ntn-page-icon-lucide');
+			el.innerHTML = svg;
+			return;
+		}
+		// An emoji (or any value Iconize didn't need an icon-pack entry
+		// for) renders as the literal character it is.
 		el.setText(raw);
 		return;
 	}
