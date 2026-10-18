@@ -27,10 +27,14 @@ interface IconizeIcon {
 
 interface IconizeIconPack {
 	getIcon(name: string): IconizeIcon | undefined;
+	getIcons(): IconizeIcon[];
+	getName(): string;
+	getPrefix(): string;
 }
 
 interface IconizeIconPackManager {
 	getIconPackByPrefix(prefix: string): IconizeIconPack | undefined;
+	getIconPacks(): IconizeIconPack[];
 }
 
 interface IconizePluginLike {
@@ -78,20 +82,34 @@ export function getIconizeSvg(app: App, rawName: string): string | undefined {
 	const split = splitIconPackName(rawName);
 	if (!split) return undefined;
 
-	const manager = getIconizePlugin(app)?.getIconPackManager?.();
-	const pack = manager?.getIconPackByPrefix?.(split.prefix);
+	const plugin = getIconizePlugin(app);
+	if (!plugin) {
+		console.warn(`[Extended Base] Iconize icon "${rawName}": the Iconize plugin (obsidian-icon-folder) isn't installed or enabled.`);
+		return undefined;
+	}
+
+	const manager = plugin.getIconPackManager?.();
+	if (!manager) {
+		console.warn(`[Extended Base] Iconize icon "${rawName}": Iconize has no getIconPackManager() — unexpected API shape (possible version mismatch).`);
+		return undefined;
+	}
+
+	const pack = manager.getIconPackByPrefix(split.prefix);
 	if (!pack) {
+		const loaded = manager.getIconPacks().map((p) => `${p.getName()} (prefix "${p.getPrefix()}")`).join(', ') || '(none)';
 		console.warn(
 			`[Extended Base] Iconize icon "${rawName}": no loaded icon pack has prefix "${split.prefix}". ` +
-			'The pack may not be downloaded, enabled, or finished loading yet.',
+			`Currently loaded packs: ${loaded}`,
 		);
 		return undefined;
 	}
 
 	const icon = pack.getIcon(split.name);
 	if (!icon) {
+		const sample = pack.getIcons().slice(0, 15).map((i) => i.name).join(', ');
 		console.warn(
-			`[Extended Base] Iconize icon "${rawName}": pack "${split.prefix}" is loaded but has no icon named "${split.name}".`,
+			`[Extended Base] Iconize icon "${rawName}": pack "${split.prefix}" is loaded (${pack.getIcons().length} icons) but has none named "${split.name}". ` +
+			`First few icon names in that pack: ${sample || '(pack has 0 icons loaded)'}`,
 		);
 		return undefined;
 	}
