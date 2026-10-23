@@ -1,63 +1,80 @@
 /**
  * The icon shown at the head of a note's title, wherever this plugin
  * renders one (the table/list/board title cell, a feed card's header).
- * Shared across all four views so the `showTitleIcon`/`titleIconProperty`
- * view options behave identically everywhere.
+ * Shared across all four views so the `showTitleIcon` view option behaves
+ * identically everywhere.
  *
- * The only source is a frontmatter property each note's own icon is read
- * from — what a per-file icon plugin like Iconize, configured to sync
- * icons to frontmatter, actually sets. There's no other icon source:
- * Obsidian itself has no per-file custom icon of its own to fall back to,
- * so a note with nothing in that property gets a plain document icon
- * instead (the same default Iconize itself shows for a file with no icon
- * assigned).
+ * The only source is the Iconize community plugin's own per-file icon
+ * assignment — the real icon a note shows in Obsidian's sidebar — read
+ * directly from Iconize's plugin data (see `./iconize.ts`), not frontmatter;
+ * Iconize itself doesn't write picked icons into frontmatter. A note with
+ * nothing assigned there gets a plain document icon instead (the same
+ * default Iconize itself shows for a file with no icon).
  */
-import { BasesEntry, BasesPropertyId, BasesViewConfig, setIcon } from 'obsidian';
-import { isNullish } from './values';
+import { App, BasesEntry, BasesViewConfig, setIcon } from 'obsidian';
+import { getIconizeIconName, getIconizeSvg, getIconizeSvgAsync, splitIconPackName } from './iconize';
 
 export interface TitleIconConfig {
 	/** The `showTitleIcon` master toggle — false hides the icon entirely. */
 	show: boolean;
-	/** The frontmatter property each note stores its own icon in (e.g. `icon`). */
-	property: string;
 }
 
-/** Read the `showTitleIcon`/`titleIconProperty` view options into a {@link TitleIconConfig}. */
+/** Read the `showTitleIcon` view option into a {@link TitleIconConfig}. */
 export function readTitleIconConfig(config: BasesViewConfig): TitleIconConfig {
 	return {
 		// Default-on: only an explicit `false` turns the icon off (mirrors wrapCells/verticalLines).
 		show: config.get('showTitleIcon') !== false,
-		property: String(config.get('titleIconProperty') ?? 'icon').trim(),
 	};
 }
 
 /**
- * The icon at the head of a title: this note's own value for the
- * configured icon property (a bare lowercase word tries as a Lucide icon
- * name; anything else — an emoji, a symbol — renders as the text it is),
- * or a plain document icon for a note with nothing set there.
+ * The icon at the head of a title: this note's own icon as Iconize has it
+ * assigned — the real icon-pack SVG Iconize itself would draw (any pack,
+ * not just Lucide), or the literal character for an emoji — or a plain
+ * document icon for a note with nothing assigned there.
  */
-export function renderTitleIcon(wrap: HTMLElement, cfg: TitleIconConfig, entry: BasesEntry): void {
+export function renderTitleIcon(wrap: HTMLElement, cfg: TitleIconConfig, app: App, entry: BasesEntry): void {
 	if (!cfg.show) return;
 	const el = wrap.createSpan({ cls: 'ntn-page-icon' });
 
-	const raw = resolvePropertyValue(entry, cfg.property);
-	if (raw) {
-		const named = /^[a-z][a-z0-9-]*$/.test(raw);
-		if (named && setLucideIcon(el, raw)) return;
+	const raw = getIconizeIconName(app, entry.file.path);
+	if (!raw) {
+		// Nothing assigned for this note — Iconize's own default for a
+		// file with no icon: a plain document icon.
+		setLucideIcon(el, 'file');
+		return;
+	}
+
+	if (!splitIconPackName(raw)) {
+		// No pack prefix to look up — an emoji (or any other value Iconize
+		// didn't need an icon-pack entry for) renders as the literal
+		// character it is.
 		el.setText(raw);
 		return;
 	}
-	// Nothing set for this note — Iconize's own default for a file with no
-	// icon assigned: a plain document icon.
+
+	const svg = getIconizeSvg(app, raw);
+	if (svg) {
+		drawSvg(el, svg);
+		return;
+	}
+
+	// Iconize hasn't fully loaded this icon's pack into memory yet (it
+	// only eagerly loads so much at startup — see iconize.ts). Show the
+	// plain document icon for now and swap in the real one once it's
+	// ready, if it ever resolves.
 	setLucideIcon(el, 'file');
+	void getIconizeSvgAsync(app, raw).then((lateSvg) => {
+		if (!lateSvg || !el.isConnected) return;
+		el.empty();
+		el.removeClass('ntn-page-icon-lucide');
+		drawSvg(el, lateSvg);
+	});
 }
 
-/** This note's own value for the configured icon property, trimmed; `''` if unset/empty. */
-function resolvePropertyValue(entry: BasesEntry, propertyName: string): string {
-	if (!propertyName) return '';
-	const value = entry.getValue(`note.${propertyName}` as BasesPropertyId);
-	return isNullish(value) ? '' : value.toString().trim();
+function drawSvg(el: HTMLElement, svg: string): void {
+	el.addClass('ntn-page-icon-lucide');
+	el.innerHTML = svg;
 }
 
 /**
