@@ -15,8 +15,18 @@
  * supports many icon packs beyond Lucide, so Obsidian's own Lucide-only
  * `setIcon` can't render most of them). {@link getIconizeSvg} mirrors
  * Iconize's own `getIconByName` lookup (prefix → loaded pack → icon by
- * name) so this resolves the same way Iconize itself would, for any pack
- * it has loaded.
+ * name).
+ *
+ * That lookup only finds icons from a pack Iconize has actually read off
+ * disk into memory — and at plugin load, Iconize only eagerly does that for
+ * zip-downloaded packs' *shells* (`init()`) plus the handful of icons
+ * already in use (`loadUsedIcons()`); a pack installed as a plain folder
+ * (not a zip), or an icon not yet in that "used" set, stays unregistered
+ * until something calls the separate, heavier `loadAll()` — which Iconize
+ * itself only does on a deferred/background pass, not before a Bases view
+ * can already have rendered. {@link getIconizeSvgAsync} covers that gap: it
+ * tries the fast synchronous lookup first, and on a miss, triggers (and
+ * caches) that same `loadAll()` itself and retries once it resolves.
  */
 import { App } from 'obsidian';
 
@@ -27,14 +37,11 @@ interface IconizeIcon {
 
 interface IconizeIconPack {
 	getIcon(name: string): IconizeIcon | undefined;
-	getIcons(): IconizeIcon[];
-	getName(): string;
-	getPrefix(): string;
 }
 
 interface IconizeIconPackManager {
 	getIconPackByPrefix(prefix: string): IconizeIconPack | undefined;
-	getIconPacks(): IconizeIconPack[];
+	loadAll(): Promise<void>;
 }
 
 interface IconizePluginLike {
@@ -64,7 +71,7 @@ export function getIconizeIconName(app: App, path: string): string | undefined {
  * or digit after the first character. A name with no such second boundary
  * (e.g. a bare `smile`) has no prefix to split off.
  */
-function splitIconPackName(value: string): { prefix: string; name: string } | null {
+export function splitIconPackName(value: string): { prefix: string; name: string } | null {
 	if (value.length < 2) return null;
 	let i = 1;
 	while (i < value.length && !/[A-Z0-9]/.test(value[i])) i++;
@@ -75,44 +82,38 @@ function splitIconPackName(value: string): { prefix: string; name: string } | nu
  * The real `<svg>...</svg>` markup for a raw Iconize icon name — the same
  * lookup Iconize's own `getIconByName` does (prefix → the loaded pack with
  * that prefix → the icon by name within it). Undefined when Iconize isn't
- * installed, the name has no pack prefix (a bare emoji character), the
- * pack isn't currently loaded, or that pack has no icon by that name.
+ * installed, the name has no pack prefix (a bare emoji character), or that
+ * pack/icon isn't loaded into memory yet — see {@link getIconizeSvgAsync}.
  */
 export function getIconizeSvg(app: App, rawName: string): string | undefined {
 	const split = splitIconPackName(rawName);
 	if (!split) return undefined;
+	const manager = getIconizePlugin(app)?.getIconPackManager?.();
+	const icon = manager?.getIconPackByPrefix(split.prefix)?.getIcon(split.name);
+	return icon?.svgElement;
+}
 
-	const plugin = getIconizePlugin(app);
-	if (!plugin) {
-		console.warn(`[Extended Base] Iconize icon "${rawName}": the Iconize plugin (obsidian-icon-folder) isn't installed or enabled.`);
-		return undefined;
+/** One shared, cached `loadAll()` call per app session — never kicked off twice. */
+let loadAllPromise: Promise<void> | null = null;
+
+/**
+ * {@link getIconizeSvg}, but when the fast path misses (the pack hasn't
+ * been fully read off disk yet — see the module doc comment), forces
+ * Iconize to finish loading every icon pack and retries once. Resolves to
+ * undefined if it's still not found after that (Iconize isn't installed,
+ * the icon was removed, or the pack genuinely isn't downloaded).
+ */
+export async function getIconizeSvgAsync(app: App, rawName: string): Promise<string | undefined> {
+	const direct = getIconizeSvg(app, rawName);
+	if (direct) return direct;
+
+	const manager = getIconizePlugin(app)?.getIconPackManager?.();
+	if (!manager) return undefined;
+
+	if (!loadAllPromise) {
+		loadAllPromise = manager.loadAll().catch(() => undefined);
 	}
+	await loadAllPromise;
 
-	const manager = plugin.getIconPackManager?.();
-	if (!manager) {
-		console.warn(`[Extended Base] Iconize icon "${rawName}": Iconize has no getIconPackManager() — unexpected API shape (possible version mismatch).`);
-		return undefined;
-	}
-
-	const pack = manager.getIconPackByPrefix(split.prefix);
-	if (!pack) {
-		const loaded = manager.getIconPacks().map((p) => `${p.getName()} (prefix "${p.getPrefix()}")`).join(', ') || '(none)';
-		console.warn(
-			`[Extended Base] Iconize icon "${rawName}": no loaded icon pack has prefix "${split.prefix}". ` +
-			`Currently loaded packs: ${loaded}`,
-		);
-		return undefined;
-	}
-
-	const icon = pack.getIcon(split.name);
-	if (!icon) {
-		const sample = pack.getIcons().slice(0, 15).map((i) => i.name).join(', ');
-		console.warn(
-			`[Extended Base] Iconize icon "${rawName}": pack "${split.prefix}" is loaded (${pack.getIcons().length} icons) but has none named "${split.name}". ` +
-			`First few icon names in that pack: ${sample || '(pack has 0 icons loaded)'}`,
-		);
-		return undefined;
-	}
-
-	return icon.svgElement;
+	return getIconizeSvg(app, rawName);
 }

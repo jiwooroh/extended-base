@@ -12,7 +12,7 @@
  * default Iconize itself shows for a file with no icon).
  */
 import { App, BasesEntry, BasesViewConfig, setIcon } from 'obsidian';
-import { getIconizeIconName, getIconizeSvg } from './iconize';
+import { getIconizeIconName, getIconizeSvg, getIconizeSvgAsync, splitIconPackName } from './iconize';
 
 export interface TitleIconConfig {
 	/** The `showTitleIcon` master toggle — false hides the icon entirely. */
@@ -38,21 +38,43 @@ export function renderTitleIcon(wrap: HTMLElement, cfg: TitleIconConfig, app: Ap
 	const el = wrap.createSpan({ cls: 'ntn-page-icon' });
 
 	const raw = getIconizeIconName(app, entry.file.path);
-	if (raw) {
-		const svg = getIconizeSvg(app, raw);
-		if (svg) {
-			el.addClass('ntn-page-icon-lucide');
-			el.innerHTML = svg;
-			return;
-		}
-		// An emoji (or any value Iconize didn't need an icon-pack entry
-		// for) renders as the literal character it is.
+	if (!raw) {
+		// Nothing assigned for this note — Iconize's own default for a
+		// file with no icon: a plain document icon.
+		setLucideIcon(el, 'file');
+		return;
+	}
+
+	if (!splitIconPackName(raw)) {
+		// No pack prefix to look up — an emoji (or any other value Iconize
+		// didn't need an icon-pack entry for) renders as the literal
+		// character it is.
 		el.setText(raw);
 		return;
 	}
-	// Nothing assigned for this note — Iconize's own default for a file
-	// with no icon: a plain document icon.
+
+	const svg = getIconizeSvg(app, raw);
+	if (svg) {
+		drawSvg(el, svg);
+		return;
+	}
+
+	// Iconize hasn't fully loaded this icon's pack into memory yet (it
+	// only eagerly loads so much at startup — see iconize.ts). Show the
+	// plain document icon for now and swap in the real one once it's
+	// ready, if it ever resolves.
 	setLucideIcon(el, 'file');
+	void getIconizeSvgAsync(app, raw).then((lateSvg) => {
+		if (!lateSvg || !el.isConnected) return;
+		el.empty();
+		el.removeClass('ntn-page-icon-lucide');
+		drawSvg(el, lateSvg);
+	});
+}
+
+function drawSvg(el: HTMLElement, svg: string): void {
+	el.addClass('ntn-page-icon-lucide');
+	el.innerHTML = svg;
 }
 
 /**
