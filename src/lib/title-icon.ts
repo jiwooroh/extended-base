@@ -87,9 +87,17 @@ function toKebabCase(name: string): string {
 		.toLowerCase();
 }
 
+/**
+ * Insert an icon-pack's `<svg>...</svg>` markup (read off disk in
+ * iconize.ts) as real DOM nodes — parsed via `DOMParser`, not assigned
+ * through `innerHTML`, so this never executes markup as live HTML even
+ * though the source is a local file we trust.
+ */
 function drawSvg(el: HTMLElement, svg: string): void {
+	const root = new DOMParser().parseFromString(svg, 'image/svg+xml').documentElement;
+	if (!(root instanceof SVGElement)) return;
 	el.addClass('ntn-page-icon-lucide');
-	el.innerHTML = svg;
+	el.appendChild(el.doc.importNode(root, true));
 }
 
 /**
