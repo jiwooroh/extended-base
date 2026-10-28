@@ -52,8 +52,8 @@ export class NotionTableView extends BasesView {
 	private pills: PillDetection = { pillProps: new Set(), listProps: new Set() };
 	/** User-pinned value → color overrides from the `pinnedColors` view option. */
 	private pinnedColors: PinnedColors = new Map();
-	/** How a note's title icon renders (the `titleIcon`/`titleIconCustom` view options). */
-	private titleIconCfg: TitleIconConfig = { show: true, property: 'icon' };
+	/** How a note's title icon renders (the `showTitleIcon` view option). */
+	private titleIconCfg: TitleIconConfig = { show: true };
 	/** Whether to also push pill colors into the Pretty Properties plugin (the `syncPrettyProperties` view option). */
 	private syncPP = false;
 	/** Set of group full keys that are currently collapsed. */
@@ -716,7 +716,7 @@ export class NotionTableView extends BasesView {
 			td.addClass('ntn-col-title'); // Inherit some styling like min-width
 			
 			const titleWrap = td.createDiv({ cls: 'ntn-title-wrap' });
-			renderTitleIcon(titleWrap, this.titleIconCfg, entry);
+			renderTitleIcon(titleWrap, this.titleIconCfg, this.app, entry);
 
 			const link = titleWrap.createSpan({ text: entry.file.basename, cls: 'ntn-title-text' });
 			link.addEventListener('click', (evt) => {

@@ -2,26 +2,20 @@
 import { BasesAllOptions, BasesViewConfig } from 'obsidian';
 
 /**
- * The `showTitleIcon`/`titleIconProperty` options, shared by all four views
- * so a note's title icon is configured the same way everywhere. The only
- * icon source is a frontmatter property (what a per-file icon plugin like
- * Iconize, synced to frontmatter, actually sets) — there's no other mode,
- * since Obsidian itself has no per-file custom icon of its own to offer.
- * Spread into each view's option list.
+ * The `showTitleIcon` option, shared by all four views so a note's title
+ * icon is configured the same way everywhere. The only icon source is the
+ * Iconize community plugin's own per-file icon assignment (the real icon a
+ * note shows in Obsidian's sidebar) — there's no other mode, since Obsidian
+ * itself has no per-file custom icon of its own to offer. Spread into each
+ * view's option list.
  */
 function titleIconOptions(): BasesAllOptions[] {
 	return [
 		{
 			type: 'toggle',
 			key: 'showTitleIcon',
-			displayName: 'Show title icon',
+			displayName: "Show title icon — a note's icon as the Iconize plugin has it assigned, if installed. A note with nothing assigned gets a plain document icon.",
 			default: true,
-		},
-		{
-			type: 'text',
-			key: 'titleIconProperty',
-			displayName: "Icon property — e.g. icon, the frontmatter key a plugin like Iconize's \"sync to frontmatter\" option writes each note's sidebar icon to. A note with nothing set there gets a plain document icon.",
-			default: 'icon',
 		},
 	];
 }

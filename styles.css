@@ -906,6 +906,13 @@
 	height: min(85vh, 720px);
 	max-height: 85vh;
 	padding: 0;
+	/* Some themes make .modal translucent (a frosted-glass backdrop-filter
+	   over a semi-transparent background) — pin this panel to a fully
+	   opaque background regardless, so the base/table underneath never
+	   shows through it. */
+	background: var(--background-primary);
+	backdrop-filter: none;
+	-webkit-backdrop-filter: none;
 }
 
 /* Open-in-new-tab button, sitting just left of the modal's own close X

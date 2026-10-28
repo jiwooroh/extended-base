@@ -4,7 +4,7 @@
 	"version": "1.4.0",
 	"minAppVersion": "1.10.2",
 	"description": "Notion-style Bases views: table, list, board, and feed, with colored pills, inline editing, and nested groups.",
-	"author": "Lucy Roh",
+	"author": "Jiwoo Roh",
 	"authorUrl": "https://github.com/lucytheboss",
 	"isDesktopOnly": false
 }
