@@ -163,8 +163,36 @@
 
 			<details class="release" open>
 				<summary>
-					<span class="ver">1.4.0</span>
+					<span class="ver">1.5.0</span>
 					<span class="tag">Latest</span>
+				</summary>
+				<div class="body">
+					<ul>
+						<li>Fixed: title icons showed the generic document icon for
+							every note, regardless of its real Iconize-assigned sidebar
+							icon. The title icon feature was reading a frontmatter
+							property, but Iconize doesn't write a picked icon into
+							frontmatter by default — it keeps per-file icon assignments
+							in its own plugin data. Title icons now read that real
+							per-file icon directly, and render the actual icon-pack SVG
+							(any pack, not just Lucide — read straight off disk, the same
+							way Iconize itself resolves one), not just the subset that
+							happens to be a Lucide name.</li>
+						<li>Removed: the now-pointless <strong>Icon property</strong>
+							view option — there's no frontmatter key to configure
+							anymore. <strong>Show title icon</strong> is the only
+							title-icon setting left, in all four views.</li>
+						<li>Fixed: the Notion-style page panel now has a fully opaque
+							background. Some themes make <code>.modal</code> translucent
+							(a frosted-glass blur over a semi-transparent background),
+							which let the base/table underneath show through it.</li>
+					</ul>
+				</div>
+			</details>
+
+			<details class="release">
+				<summary>
+					<span class="ver">1.4.0</span>
 				</summary>
 				<div class="body">
 					<ul>

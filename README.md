@@ -188,12 +188,12 @@ then opens the panel instead of a tab (Ctrl/Cmd-click still opens a tab):
 - **Theme-aware chrome** — text, borders, hover states, and the view's own
   background all come from Obsidian's active theme, so Extended Base
   matches whatever theme (not just light/dark mode) you have installed.
-- **Title icons** — every title shows an icon, sourced from a frontmatter
-  property (the *Icon property* view option, default `icon`) that a
-  per-file icon plugin like [Iconize](https://github.com/FlorianWoelki/obsidian-iconize)
-  can be configured to sync each note's sidebar icon into. A note with
-  nothing set there gets a plain document icon instead. Turn it off
-  entirely with the *Show title icon* option.
+- **Title icons** — every title shows the note's real icon as the
+  [Iconize](https://github.com/FlorianWoelki/obsidian-iconize) plugin has
+  it assigned (any icon pack, not just Lucide — read straight off disk,
+  the same way Iconize itself resolves one), or a plain document icon for
+  a note with nothing assigned. Turn it off entirely with the *Show title
+  icon* option.
 - **Colored pills** — list properties (tags, multitext) and single-choice
   `select` properties render as pills using Notion's 9-color palette, with
   accurate light- and dark-mode values. Colors are assigned by a
@@ -266,7 +266,6 @@ then opens the panel instead of a tab (Ctrl/Cmd-click still opens a tab):
 | Show group color as (Off/Label/Background/Both) | | | ✅ | |
 | Open notes in | ✅ | ✅ | ✅ | ✅ |
 | Show title icon | ✅ | ✅ | ✅ | ✅ |
-| Icon property | ✅ | ✅ | ✅ | ✅ |
 | Hidden groups | | | ✅ | |
 | Hidden columns (right-click a header) | ✅ | | | |
 | Show a card property's name as | | | ✅ | |
@@ -362,6 +361,25 @@ Source layout:
 - ⚪️ **Gallery view** — card galleries with cover images.
 
 ## Changelog
+
+### 1.5.0
+
+- **Fixed:** title icons showed the generic document icon for every
+  note, regardless of its real Iconize-assigned sidebar icon. The
+  title icon feature was reading a frontmatter property, but Iconize
+  doesn't write a picked icon into frontmatter by default — it keeps
+  per-file icon assignments in its own plugin data. Title icons now
+  read that real per-file icon directly, and render the actual
+  icon-pack SVG (any pack, not just Lucide — read straight off disk,
+  the same way Iconize itself resolves one), not just the subset that
+  happens to be a Lucide name.
+- **Removed:** the now-pointless *Icon property* view option — there's
+  no frontmatter key to configure anymore. *Show title icon* is the
+  only title-icon setting left, in all four views.
+- **Fixed:** the Notion-style page panel now has a fully opaque
+  background. Some themes make `.modal` translucent (a frosted-glass
+  blur over a semi-transparent background), which let the base/table
+  underneath show through it.
 
 ### 1.4.0
 

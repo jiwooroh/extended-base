@@ -1,49 +1,35 @@
-# Extended Base 1.4.0
+# Extended Base 1.5.0
 
-Pick your palette, read list rows without squinting, and a few bugs
-that were quietly getting in the way are gone.
+Title icons actually show your real icons now — any pack, not just
+Lucide — and the page panel stopped letting themes see through it.
 
-## 🆕 Color scheme: Notion or Apple
+## 🐛 Title icons, actually fixed
 
-A new plugin-wide setting — **Obsidian Settings → Extended Base →
-Color scheme** — not a per-base option, so it applies to every base at
-once. The original 9-color palette is now named **Notion**; pick
-**Apple** instead for the system red/orange/yellow/green/blue/purple/
-pink/gray/brown palette, light and dark mode both included. Switching
-takes effect the next time an already-open base re-renders — switch
-tabs away and back, or just reopen it.
+Title icons previously showed the generic document icon for every
+note, no matter what icon it actually had in Iconize. The root cause:
+Iconize doesn't write a picked icon into frontmatter by default — it
+keeps per-file icon assignments in its own plugin data — but the
+title icon feature was reading a frontmatter property instead, which
+was almost always empty.
 
-## 🆕 List view, stacked vertically
-
-Each row now shows the title on its own line, then every other
-property on its own line below it (a small property icon plus its
-value) — instead of cramming properties into a horizontal strip next
-to the title, where most of them had no room to actually be read.
-
-## 🆕 Board card property labels
-
-A new "Show a card property's name as" view option for the board view:
-**Icon + name**, **Icon only**, **Name only**, or **None** (the
-default — nothing changes unless you turn it on).
+Title icons now read a note's real Iconize-assigned icon directly,
+and render the actual icon-pack SVG — any pack Iconize has installed,
+not just Lucide — the same way Iconize itself resolves one, straight
+off disk. Since there's no frontmatter key to configure anymore, the
+now-pointless *Icon property* view option is gone; *Show title icon*
+is the only title-icon setting left, in all four views.
 
 ## 🐛 Fixed
 
-- **Checkbox properties with nothing set now actually show up.** A
-  checkbox with no value on a note came back as "nothing" rather than
-  an unchecked `false`, so the table/list/board cell silently rendered
-  empty instead of an actual checkbox you could click.
-- **Resized columns can now shrink all the way to icon width.** A
-  table column could never shrink below its full label's width, even
-  with the label visually truncated — that's just how HTML tables
-  work, `min-width` or not. Dragging one narrow now hides the label
-  outright below ~48px, so the column keeps shrinking down to just its
-  icon, the way it should've all along.
+- **The Notion-style page panel is now fully opaque.** Some themes
+  make `.modal` translucent (a frosted-glass blur over a
+  semi-transparent background), which let the base/table underneath
+  show through the panel.
 
 ## Upgrading
 
-Drop-in — no config or `.base` file changes needed. The color scheme
-defaults to **Notion**, so nothing looks different until you open
-Settings and switch it. List view rows will look different right away
-— that's the intended layout change, not a bug.
+Drop-in — no config or `.base` file changes needed. If you'd set a
+custom *Icon property* value, it's simply ignored now; title icons
+read your real Iconize assignment automatically instead.
 
 See the [full changelog](README.md#changelog) for the complete history.
