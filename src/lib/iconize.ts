@@ -58,6 +58,22 @@ function getIconizePlugin(app: App): IconizePluginLike | undefined {
 	return plugins?.plugins?.['obsidian-icon-folder'];
 }
 
+/** Every method name on an object's own prototype chain (not just its own properties) — for diagnosing an unknown API shape at runtime. */
+function listMethodNames(obj: unknown): string[] {
+	if (!obj || typeof obj !== 'object') return [];
+	const names = new Set<string>();
+	let proto: object | null = Object.getPrototypeOf(obj);
+	while (proto && proto !== Object.prototype) {
+		for (const name of Object.getOwnPropertyNames(proto)) {
+			if (name === 'constructor') continue;
+			const value = (proto as Record<string, unknown>)[name];
+			if (typeof value === 'function') names.add(name);
+		}
+		proto = Object.getPrototypeOf(proto);
+	}
+	return [...names].sort();
+}
+
 /**
  * This file's icon exactly as Iconize stores it, or undefined if Iconize
  * isn't installed/enabled or has no icon assigned for this path. The raw
@@ -128,9 +144,19 @@ export async function getIconizeSvgAsync(app: App, rawName: string): Promise<str
 	if (direct) return direct;
 
 	const plugin = getIconizePlugin(app);
-	const manager = plugin?.getIconPackManager?.();
-	if (!plugin || !manager) {
-		const msg = `[Extended Base] Iconize icon "${rawName}": Iconize plugin (obsidian-icon-folder) or its getIconPackManager() wasn't found. Is Iconize installed and enabled?`;
+	if (!plugin) {
+		const msg = '[Extended Base] Iconize icon lookup: the Iconize plugin (id "obsidian-icon-folder") was not found under app.plugins.plugins. Is it installed and enabled?';
+		console.warn(msg);
+		showDiagnosisOnce(msg);
+		return undefined;
+	}
+
+	const manager = plugin.getIconPackManager?.();
+	if (!manager) {
+		const methods = listMethodNames(plugin).join(', ') || '(none found)';
+		const msg =
+			'[Extended Base] Iconize icon lookup: the Iconize plugin was found, but it has no getIconPackManager() method — ' +
+			`this installed version's API differs from what this was built against. Methods it does have: ${methods}`;
 		console.warn(msg);
 		showDiagnosisOnce(msg);
 		return undefined;
