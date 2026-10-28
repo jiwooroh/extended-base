@@ -28,7 +28,7 @@
  * tries the fast synchronous lookup first, and on a miss, triggers (and
  * caches) that same `loadAll()` itself and retries once it resolves.
  */
-import { App } from 'obsidian';
+import { App, Notice } from 'obsidian';
 
 interface IconizeIcon {
 	name: string;
@@ -101,6 +101,18 @@ export function getIconizeSvg(app: App, rawName: string): string | undefined {
 let loadAllPromise: Promise<unknown> | null = null;
 /** Whether forcing `loadAll()` itself failed (logged once, not per icon). */
 let loadAllFailed = false;
+/**
+ * Shows the first diagnosis as an on-screen Notice, not just a console log
+ * — the dev console isn't available on every platform (mobile) or to every
+ * user, but a Notice always is. Fires once per session so a table full of
+ * unresolved icons doesn't spam a dozen popups.
+ */
+let diagnosisShown = false;
+function showDiagnosisOnce(message: string): void {
+	if (diagnosisShown) return;
+	diagnosisShown = true;
+	new Notice(message, 0);
+}
 
 /**
  * {@link getIconizeSvg}, but when the fast path misses (the pack hasn't
@@ -118,14 +130,18 @@ export async function getIconizeSvgAsync(app: App, rawName: string): Promise<str
 	const plugin = getIconizePlugin(app);
 	const manager = plugin?.getIconPackManager?.();
 	if (!plugin || !manager) {
-		console.warn(`[Extended Base] Iconize icon "${rawName}": plugin or getIconPackManager() not found (is Iconize installed and enabled?).`);
+		const msg = `[Extended Base] Iconize icon "${rawName}": Iconize plugin (obsidian-icon-folder) or its getIconPackManager() wasn't found. Is Iconize installed and enabled?`;
+		console.warn(msg);
+		showDiagnosisOnce(msg);
 		return undefined;
 	}
 
 	if (!loadAllPromise) {
 		loadAllPromise = manager.loadAll().catch((e) => {
 			loadAllFailed = true;
-			console.error('[Extended Base] Iconize loadAll() threw while force-loading icon packs:', e);
+			const msg = `[Extended Base] Iconize loadAll() threw while force-loading icon packs: ${e}`;
+			console.error(msg, e);
+			showDiagnosisOnce(msg);
 		});
 	}
 	await loadAllPromise;
@@ -136,10 +152,11 @@ export async function getIconizeSvgAsync(app: App, rawName: string): Promise<str
 		const split = splitIconPackName(rawName);
 		const packs = manager.getIconPacks();
 		const loaded = packs.map((p) => `${p.getName()} (prefix "${p.getPrefix()}", ${p.getIcons().length} icons)`).join(', ') || '(none)';
-		console.warn(
+		const msg =
 			`[Extended Base] Iconize icon "${rawName}" still unresolved after loadAll(). ` +
-			`Looking for prefix "${split?.prefix}". Currently loaded packs: ${loaded}`,
-		);
+			`Looking for prefix "${split?.prefix}". Loaded packs: ${loaded}`;
+		console.warn(msg);
+		showDiagnosisOnce(msg);
 	}
 	return resolved;
 }
