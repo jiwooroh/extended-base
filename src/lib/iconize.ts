@@ -58,22 +58,6 @@ function getIconizePlugin(app: App): IconizePluginLike | undefined {
 	return plugins?.plugins?.['obsidian-icon-folder'];
 }
 
-/** Every method name on an object's own prototype chain (not just its own properties) — for diagnosing an unknown API shape at runtime. */
-function listMethodNames(obj: unknown): string[] {
-	if (!obj || typeof obj !== 'object') return [];
-	const names = new Set<string>();
-	let proto: object | null = Object.getPrototypeOf(obj);
-	while (proto && proto !== Object.prototype) {
-		for (const name of Object.getOwnPropertyNames(proto)) {
-			if (name === 'constructor') continue;
-			const value = (proto as Record<string, unknown>)[name];
-			if (typeof value === 'function') names.add(name);
-		}
-		proto = Object.getPrototypeOf(proto);
-	}
-	return [...names].sort();
-}
-
 /**
  * This file's icon exactly as Iconize stores it, or undefined if Iconize
  * isn't installed/enabled or has no icon assigned for this path. The raw
@@ -153,10 +137,12 @@ export async function getIconizeSvgAsync(app: App, rawName: string): Promise<str
 
 	const manager = plugin.getIconPackManager?.();
 	if (!manager) {
-		const methods = listMethodNames(plugin).join(', ') || '(none found)';
+		const version = (app as unknown as { plugins?: { manifests?: Record<string, { version?: string }> } })
+			.plugins?.manifests?.['obsidian-icon-folder']?.version ?? '(unknown)';
+		const ownProps = Object.keys(plugin as object).sort().join(', ') || '(none)';
 		const msg =
-			'[Extended Base] Iconize icon lookup: the Iconize plugin was found, but it has no getIconPackManager() method — ' +
-			`this installed version's API differs from what this was built against. Methods it does have: ${methods}`;
+			`[Extended Base] Iconize icon lookup: no getIconPackManager() method on this installed version (v${version}). ` +
+			`Its own instance fields: ${ownProps}`;
 		console.warn(msg);
 		showDiagnosisOnce(msg);
 		return undefined;
