@@ -37,10 +37,14 @@ interface IconizeIcon {
 
 interface IconizeIconPack {
 	getIcon(name: string): IconizeIcon | undefined;
+	getIcons(): IconizeIcon[];
+	getName(): string;
+	getPrefix(): string;
 }
 
 interface IconizeIconPackManager {
 	getIconPackByPrefix(prefix: string): IconizeIconPack | undefined;
+	getIconPacks(): IconizeIconPack[];
 	loadAll(): Promise<void>;
 }
 
@@ -94,26 +98,48 @@ export function getIconizeSvg(app: App, rawName: string): string | undefined {
 }
 
 /** One shared, cached `loadAll()` call per app session — never kicked off twice. */
-let loadAllPromise: Promise<void> | null = null;
+let loadAllPromise: Promise<unknown> | null = null;
+/** Whether forcing `loadAll()` itself failed (logged once, not per icon). */
+let loadAllFailed = false;
 
 /**
  * {@link getIconizeSvg}, but when the fast path misses (the pack hasn't
  * been fully read off disk yet — see the module doc comment), forces
  * Iconize to finish loading every icon pack and retries once. Resolves to
  * undefined if it's still not found after that (Iconize isn't installed,
- * the icon was removed, or the pack genuinely isn't downloaded).
+ * the icon was removed, or the pack genuinely isn't downloaded) — and logs
+ * exactly which of those it was, once per distinct icon, since this can't
+ * be tested against a real vault/Iconize installation from here.
  */
 export async function getIconizeSvgAsync(app: App, rawName: string): Promise<string | undefined> {
 	const direct = getIconizeSvg(app, rawName);
 	if (direct) return direct;
 
-	const manager = getIconizePlugin(app)?.getIconPackManager?.();
-	if (!manager) return undefined;
+	const plugin = getIconizePlugin(app);
+	const manager = plugin?.getIconPackManager?.();
+	if (!plugin || !manager) {
+		console.warn(`[Extended Base] Iconize icon "${rawName}": plugin or getIconPackManager() not found (is Iconize installed and enabled?).`);
+		return undefined;
+	}
 
 	if (!loadAllPromise) {
-		loadAllPromise = manager.loadAll().catch(() => undefined);
+		loadAllPromise = manager.loadAll().catch((e) => {
+			loadAllFailed = true;
+			console.error('[Extended Base] Iconize loadAll() threw while force-loading icon packs:', e);
+		});
 	}
 	await loadAllPromise;
+	if (loadAllFailed) return undefined;
 
-	return getIconizeSvg(app, rawName);
+	const resolved = getIconizeSvg(app, rawName);
+	if (!resolved) {
+		const split = splitIconPackName(rawName);
+		const packs = manager.getIconPacks();
+		const loaded = packs.map((p) => `${p.getName()} (prefix "${p.getPrefix()}", ${p.getIcons().length} icons)`).join(', ') || '(none)';
+		console.warn(
+			`[Extended Base] Iconize icon "${rawName}" still unresolved after loadAll(). ` +
+			`Looking for prefix "${split?.prefix}". Currently loaded packs: ${loaded}`,
+		);
+	}
+	return resolved;
 }
