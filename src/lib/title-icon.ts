@@ -12,7 +12,7 @@
  * default Iconize itself shows for a file with no icon).
  */
 import { App, BasesEntry, BasesViewConfig, setIcon } from 'obsidian';
-import { getIconizeIconName, getIconizeSvg, getIconizeSvgAsync, splitIconPackName } from './iconize';
+import { getIconizeIconName, getIconizeSvg, splitIconPackName } from './iconize';
 
 export interface TitleIconConfig {
 	/** The `showTitleIcon` master toggle — false hides the icon entirely. */
@@ -32,6 +32,11 @@ export function readTitleIconConfig(config: BasesViewConfig): TitleIconConfig {
  * assigned — the real icon-pack SVG Iconize itself would draw (any pack,
  * not just Lucide), or the literal character for an emoji — or a plain
  * document icon for a note with nothing assigned there.
+ *
+ * Resolving the real SVG means reading a file off disk (see iconize.ts), so
+ * it can't happen synchronously: the plain document icon shows first and
+ * gets swapped for the real one as soon as it resolves, rather than making
+ * every row's render wait on a filesystem read.
  */
 export function renderTitleIcon(wrap: HTMLElement, cfg: TitleIconConfig, app: App, entry: BasesEntry): void {
 	if (!cfg.show) return;
@@ -53,23 +58,33 @@ export function renderTitleIcon(wrap: HTMLElement, cfg: TitleIconConfig, app: Ap
 		return;
 	}
 
-	const svg = getIconizeSvg(app, raw);
-	if (svg) {
-		drawSvg(el, svg);
-		return;
-	}
-
-	// Iconize hasn't fully loaded this icon's pack into memory yet (it
-	// only eagerly loads so much at startup — see iconize.ts). Show the
-	// plain document icon for now and swap in the real one once it's
-	// ready, if it ever resolves.
 	setLucideIcon(el, 'file');
-	void getIconizeSvgAsync(app, raw).then((lateSvg) => {
-		if (!lateSvg || !el.isConnected) return;
-		el.empty();
-		el.removeClass('ntn-page-icon-lucide');
-		drawSvg(el, lateSvg);
+	void getIconizeSvg(app, raw).then((svg) => {
+		if (svg) {
+			if (!el.isConnected) return;
+			el.empty();
+			el.removeClass('ntn-page-icon-lucide');
+			drawSvg(el, svg);
+			return;
+		}
+		// No pack folder on disk matched — the common remaining case is
+		// Obsidian's own native Lucide set (Iconize's default pack, which
+		// isn't extracted to files at all when used that way): try it
+		// directly before settling for the plain document icon already shown.
+		if (!el.isConnected) return;
+		const split = splitIconPackName(raw);
+		if (!split || !setLucideIcon(el, toKebabCase(split.name))) {
+			setLucideIcon(el, 'file');
+		}
 	});
+}
+
+/** PascalCase icon name → the kebab-case id Obsidian's own Lucide set uses (e.g. `ArrowUpRight` → `arrow-up-right`). */
+function toKebabCase(name: string): string {
+	return name
+		.replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+		.replace(/([A-Z]+)([A-Z][a-z])/g, '$1-$2')
+		.toLowerCase();
 }
 
 function drawSvg(el: HTMLElement, svg: string): void {
