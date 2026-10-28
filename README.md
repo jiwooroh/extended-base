@@ -362,6 +362,15 @@ Source layout:
 
 ## Changelog
 
+### 1.5.1
+
+- **Fixed:** a security linter flagged the title icon's `innerHTML`
+  assignment (rendering a non-Lucide icon pack's SVG, read off disk)
+  as unsafe, since it can't know the source is a local file this
+  plugin trusts. Now parses the markup with `DOMParser` and inserts
+  the resulting element via `appendChild` instead, so the markup is
+  never interpreted as live HTML. No visible behavior change.
+
 ### 1.5.0
 
 - **Fixed:** title icons showed the generic document icon for every
