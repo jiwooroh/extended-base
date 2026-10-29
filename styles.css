@@ -1424,6 +1424,10 @@
 	gap: 6px;
 	cursor: pointer;
 	transition: background 20ms ease-in;
+	/* Matches its subfolder section's own indent (see
+	   .ntn-board-subgroup-label) — .ntn-board-cards is a stretched flex
+	   column, so this margin narrows the card instead of overflowing it. */
+	margin-left: var(--ntn-indent, 0px);
 }
 
 .theme-dark .ntn-board-card {
