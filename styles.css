@@ -1391,6 +1391,9 @@
 	color: var(--ntn-text-muted);
 	margin-top: 8px;
 	padding-top: 8px;
+	/* --ntn-indent is set per-instance (one step per real nesting level —
+	   a subfolder's own subfolder indents one step further than it). */
+	padding-left: var(--ntn-indent, 0px);
 	border-top: 1px solid var(--ntn-border);
 	cursor: pointer;
 	border-radius: 4px;

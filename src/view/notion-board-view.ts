@@ -22,7 +22,7 @@ import {
 import { LOG_PREFIX, NOTION_BOARD_VIEW } from '../constants';
 import { PinnedColors, applyPillColor, colorByName, resolvePillColor, resolvePillOpacity } from '../lib/colors';
 import { PillDetection, computePillProps, parsePinnedColors, pillLabel, stripPath } from '../lib/pills';
-import { buildFolderGroups, GroupNode, hideSoleTopLevelFolder, isGroupedByFolder } from '../lib/groups';
+import { buildFolderGroups, countEntries, GroupNode, hideSoleTopLevelFolder, isGroupedByFolder } from '../lib/groups';
 import { getPropertyIcon, getPropertyMetaType, isEditableProp, propBareName } from '../lib/property-types';
 import { syncPillColorToPrettyProperties } from '../lib/pretty-properties-sync';
 import { renamePillValue } from '../lib/rename';
@@ -171,31 +171,25 @@ export class NotionBoardView extends BasesView {
 		// the same nested tree table/list use (so the sole top-level
 		// wrapper folder is hidden the same way), but — unlike table/list —
 		// a deeper subfolder does NOT get its own column: every descendant,
-		// however many levels down, is flattened into that top-level
-		// column's `subgroups` and rendered as a labeled card cluster
-		// inside it. A board with one column per nested subfolder doesn't
-		// read as a Kanban board any more; Notion's own folder-grouped
-		// board does the same — one column per top-level folder, deeper
-		// folders shown as sections within it.
-		type BoardSubgroup = { key: string; fullKey: string; entries: BasesEntry[] };
-		const columns: { key: string; fullKey: string; entries: BasesEntry[]; subgroups: BoardSubgroup[] }[] = [];
+		// however many levels down, renders as a labeled card cluster
+		// inside its top-level column instead, indented and nested one
+		// step per real level (not flattened to one step for all of them,
+		// so a subfolder's own subfolder still reads as nested under it,
+		// and collapsing a subfolder collapses everything under it too).
+		// A board with one column per nested subfolder doesn't read as a
+		// Kanban board any more; Notion's own folder-grouped board does
+		// the same — one column per top-level folder, deeper folders
+		// shown as sections within it.
+		const columns: { key: string; fullKey: string; entries: BasesEntry[]; subgroups: GroupNode[] }[] = [];
 		if (folderGrouped) {
 			const roots = hideSoleTopLevelFolder(buildFolderGroups(this.data.groupedData));
-			const flattenDescendants = (node: GroupNode): BoardSubgroup[] => {
-				const result: BoardSubgroup[] = [];
-				for (const child of node.children.values()) {
-					result.push({ key: child.key, fullKey: child.fullKey, entries: child.entries });
-					result.push(...flattenDescendants(child));
-				}
-				return result;
-			};
 			for (const node of roots.values()) {
 				if (node.key) {
 					columns.push({
 						key: node.key,
 						fullKey: node.fullKey,
 						entries: node.entries,
-						subgroups: flattenDescendants(node),
+						subgroups: [...node.children.values()],
 					});
 				} else if (node.entries.length) {
 					columns.push({ key: 'No Status', fullKey: 'No Status', entries: node.entries, subgroups: [] });
@@ -273,7 +267,7 @@ export class NotionBoardView extends BasesView {
 			}
 
 			const totalCount = col.entries.length
-				+ col.subgroups.reduce((sum, sg) => sum + sg.entries.length, 0);
+				+ col.subgroups.reduce((sum, sg) => sum + countEntries(sg), 0);
 			colHeader.createSpan({ cls: 'ntn-group-count', text: String(totalCount) });
 
 			const cardsWrap = colWrap.createDiv({ cls: 'ntn-board-cards' });
@@ -282,10 +276,14 @@ export class NotionBoardView extends BasesView {
 			}
 			// Deeper subfolders render as a labeled, collapsible section
 			// inside this column rather than spawning their own column (see
-			// comment above `columns`).
-			for (const sub of col.subgroups) {
+			// comment above `columns`) — recursively, one indent step per
+			// real level, so a subfolder's own subfolder nests under it
+			// instead of sitting flat alongside it; collapsing one hides
+			// every subfolder (and card) nested under it too.
+			const renderSubgroup = (sub: GroupNode, depth: number): void => {
 				const isCollapsed = this.collapsedSubgroups.has(sub.fullKey);
 				const subLabel = cardsWrap.createDiv({ cls: 'ntn-board-subgroup-label' });
+				subLabel.setCssProps({ '--ntn-indent': `${depth * 16}px` });
 				const toggleIcon = subLabel.createSpan({ cls: 'ntn-group-toggle' });
 				toggleIcon.setText(isCollapsed ? '▶' : '▼');
 				// Always on, no view option — a quick visual cue this is a
@@ -293,7 +291,7 @@ export class NotionBoardView extends BasesView {
 				const folderIcon = subLabel.createSpan({ cls: 'ntn-group-folder-icon' });
 				setIcon(folderIcon, 'folder');
 				subLabel.createSpan({ text: sub.key });
-				subLabel.createSpan({ cls: 'ntn-group-count', text: String(sub.entries.length) });
+				subLabel.createSpan({ cls: 'ntn-group-count', text: String(countEntries(sub)) });
 				subLabel.addEventListener('click', () => {
 					if (isCollapsed) {
 						this.collapsedSubgroups.delete(sub.fullKey);
@@ -302,11 +300,15 @@ export class NotionBoardView extends BasesView {
 					}
 					this.onDataUpdated();
 				});
-				if (isCollapsed) continue;
+				if (isCollapsed) return;
 				for (const entry of sub.entries) {
 					this.renderCard(cardsWrap, entry, props);
 				}
-			}
+				for (const child of sub.children.values()) {
+					renderSubgroup(child, depth + 1);
+				}
+			};
+			for (const sub of col.subgroups) renderSubgroup(sub, 0);
 
 			// A small "+ New" at the bottom of each column
 			const colNew = colWrap.createDiv({ cls: 'ntn-board-column-new' });
