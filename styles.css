@@ -437,6 +437,21 @@
 	color: var(--ntn-text);
 }
 
+/* A nested subfolder's group header only (never the top-level folder) —
+   a plain folder glyph ahead of the label, always on. */
+.ntn-group-folder-icon {
+	display: inline-flex;
+	align-items: center;
+	margin-right: 4px;
+	color: var(--ntn-text-muted);
+	flex-shrink: 0;
+}
+
+.ntn-group-folder-icon svg {
+	width: 13px;
+	height: 13px;
+}
+
 /* Board-only: when "Show group color as" includes a label, a folder
    column's heading renders as a colored pill (bold, to still read as a
    heading) instead of the plain label above. */

@@ -144,6 +144,14 @@ export class NotionListView extends BasesView {
 				});
 
 				if (folderGrouped) {
+					// A nested subfolder (not the top-level folder) gets a plain
+					// folder icon ahead of its label, always on — no view option,
+					// just a quick visual cue it's a subfolder, not another
+					// top-level group.
+					if (depth > 0) {
+						const folderIcon = gRow.createSpan({ cls: 'ntn-group-folder-icon' });
+						setIcon(folderIcon, 'folder');
+					}
 					gRow.createSpan({ cls: 'ntn-group-folder-label', text: node.key });
 				} else {
 					const pill = gRow.createSpan({ cls: 'ntn-pill' });

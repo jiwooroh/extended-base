@@ -288,6 +288,10 @@ export class NotionBoardView extends BasesView {
 				const subLabel = cardsWrap.createDiv({ cls: 'ntn-board-subgroup-label' });
 				const toggleIcon = subLabel.createSpan({ cls: 'ntn-group-toggle' });
 				toggleIcon.setText(isCollapsed ? '▶' : '▼');
+				// Always on, no view option — a quick visual cue this is a
+				// nested subfolder, not another top-level column.
+				const folderIcon = subLabel.createSpan({ cls: 'ntn-group-folder-icon' });
+				setIcon(folderIcon, 'folder');
 				subLabel.createSpan({ text: sub.key });
 				subLabel.createSpan({ cls: 'ntn-group-count', text: String(sub.entries.length) });
 				subLabel.addEventListener('click', () => {
