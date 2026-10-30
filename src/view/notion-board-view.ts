@@ -62,6 +62,14 @@ export class NotionBoardView extends BasesView {
 	private selectEditor: SelectEditor | null = null;
 	/** Set of subgroup full keys (nested folders within a column) that are currently collapsed. */
 	private collapsedSubgroups = new Set<string>();
+	/**
+	 * The current render's board-container element. `onDataUpdated` destroys
+	 * and recreates it (along with everything else under `rootEl`) on every
+	 * call via `root.empty()`, which would otherwise silently drop its
+	 * horizontal scroll position every time — this is only ever read, right
+	 * before the next `root.empty()`, to carry that position over.
+	 */
+	private boardContainerEl: HTMLElement | null = null;
 	/** The open column-color picker flyout, if any (also drives outside-click detection). */
 	private colorMenuEl: HTMLElement | null = null;
 
@@ -126,27 +134,21 @@ export class NotionBoardView extends BasesView {
 	}
 
 
-	/**
-	 * A collapse/expand toggle rebuilds the whole view (`onDataUpdated`
-	 * empties and recreates every element), which on its own drops whatever
-	 * ancestor was scrolled down to the card you just clicked back to the
-	 * top. `root.empty()` only clears this view's own children, though — the
-	 * actual scrolling element (an Obsidian-owned ancestor, not anything of
-	 * ours) is never destroyed, so capturing and restoring its `scrollTop`
-	 * around the rebuild is enough to keep the view where it was.
+	/** The nearest ancestor above this view's own root that actually scrolls
+	 * vertically — Obsidian's own pane content wrapper, never destroyed by
+	 * this view's `root.empty()` — or null if none is. Checks `overflow-y`
+	 * itself, not just scrollHeight vs. clientHeight: a non-scrolling
+	 * wrapper can still read taller than its own box (margins, a taller
+	 * sibling) without actually being the element that scrolls, which was
+	 * silently picking the wrong ancestor some of the time.
 	 */
-	private refreshPreservingScroll(): void {
-		const scrollEl = this.findScrollParent();
-		const scrollTop = scrollEl?.scrollTop;
-		this.onDataUpdated();
-		if (scrollEl && scrollTop !== undefined) scrollEl.scrollTop = scrollTop;
-	}
-
-	/** The nearest ancestor that's actually scrollable, or null if none is. */
 	private findScrollParent(): HTMLElement | null {
 		let el = this.rootEl.parentElement;
 		while (el) {
-			if (el.scrollHeight > el.clientHeight) return el;
+			const style = this.rootEl.win.getComputedStyle(el);
+			if ((style.overflowY === 'auto' || style.overflowY === 'scroll') && el.scrollHeight > el.clientHeight) {
+				return el;
+			}
 			el = el.parentElement;
 		}
 		return null;
@@ -156,6 +158,20 @@ export class NotionBoardView extends BasesView {
 		// The toolbar may not have existed at construction time; retry until
 		// the patch lands (no-op once it has).
 		this.patchToolbarNew();
+
+		// Captured before anything is destroyed below, and restored once the
+		// new DOM (and its real scrollWidth/scrollHeight) is in place —
+		// every rebuild, not just a subgroup toggle, so the board never
+		// resets to its top-left on any `onDataUpdated` call. Horizontal is
+		// this view's own board-container scrollLeft, which `root.empty()`
+		// always destroys outright along with the element itself; vertical
+		// is Obsidian's own pane scroller, an ancestor `root.empty()` never
+		// touches, captured anyway because the *content* height changes and
+		// the browser is otherwise free to re-clamp it.
+		const prevScrollLeft = this.boardContainerEl?.scrollLeft;
+		const scrollParent = this.findScrollParent();
+		const prevScrollTop = scrollParent?.scrollTop;
+
 		const root = this.rootEl;
 		root.empty();
 
@@ -173,6 +189,7 @@ export class NotionBoardView extends BasesView {
 			? labelDisplay : 'none';
 
 		const boardContainer = root.createDiv({ cls: 'ntn-board-container' });
+		this.boardContainerEl = boardContainer;
 
 		const widthPx = { small: 200, medium: 240, large: 320 }[
 			this.config.get('boardColumnWidth') as string
@@ -324,7 +341,7 @@ export class NotionBoardView extends BasesView {
 					} else {
 						this.collapsedSubgroups.add(sub.fullKey);
 					}
-					this.refreshPreservingScroll();
+					this.onDataUpdated();
 				});
 				if (isCollapsed) return;
 				for (const entry of sub.entries) {
@@ -372,6 +389,11 @@ export class NotionBoardView extends BasesView {
 		newRow.createSpan({ cls: 'ntn-new-plus', text: '+' });
 		newRow.createSpan({ text: 'New' });
 		newRow.addEventListener('click', () => void this.createAndOpenPage());
+
+		// Restore the scroll positions captured at the very top, now that
+		// the new DOM (and its real scrollWidth/scrollHeight) exists.
+		if (prevScrollLeft !== undefined) boardContainer.scrollLeft = prevScrollLeft;
+		if (scrollParent && prevScrollTop !== undefined) scrollParent.scrollTop = prevScrollTop;
 	}
 
 	private renderCard(
