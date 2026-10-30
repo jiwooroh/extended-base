@@ -437,6 +437,21 @@
 	color: var(--ntn-text);
 }
 
+/* A nested subfolder's group header only (never the top-level folder) —
+   a plain folder glyph ahead of the label, always on. */
+.ntn-group-folder-icon {
+	display: inline-flex;
+	align-items: center;
+	margin-right: 4px;
+	color: var(--ntn-text-muted);
+	flex-shrink: 0;
+}
+
+.ntn-group-folder-icon svg {
+	width: 13px;
+	height: 13px;
+}
+
 /* Board-only: when "Show group color as" includes a label, a folder
    column's heading renders as a colored pill (bold, to still read as a
    heading) instead of the plain label above. */
@@ -1376,6 +1391,9 @@
 	color: var(--ntn-text-muted);
 	margin-top: 8px;
 	padding-top: 8px;
+	/* --ntn-indent is set per-instance (one step per real nesting level —
+	   a subfolder's own subfolder indents one step further than it). */
+	padding-left: var(--ntn-indent, 0px);
 	border-top: 1px solid var(--ntn-border);
 	cursor: pointer;
 	border-radius: 4px;
@@ -1406,6 +1424,10 @@
 	gap: 6px;
 	cursor: pointer;
 	transition: background 20ms ease-in;
+	/* Matches its subfolder section's own indent (see
+	   .ntn-board-subgroup-label) — .ntn-board-cards is a stretched flex
+	   column, so this margin narrows the card instead of overflowing it. */
+	margin-left: var(--ntn-indent, 0px);
 }
 
 .theme-dark .ntn-board-card {
