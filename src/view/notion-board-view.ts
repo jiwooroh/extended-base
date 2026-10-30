@@ -60,8 +60,6 @@ export class NotionBoardView extends BasesView {
 	private propertyLabelDisplay: 'icon-name' | 'icon' | 'name' | 'none' = 'none';
 	/** The open select editor, if any (also drives outside-click detection). */
 	private selectEditor: SelectEditor | null = null;
-	/** Set of subgroup full keys (nested folders within a column) that are currently collapsed. */
-	private collapsedSubgroups = new Set<string>();
 	/**
 	 * The current render's board-container element. `onDataUpdated` destroys
 	 * and recreates it (along with everything else under `rootEl`) on every
@@ -190,6 +188,15 @@ export class NotionBoardView extends BasesView {
 
 		const boardContainer = root.createDiv({ cls: 'ntn-board-container' });
 		this.boardContainerEl = boardContainer;
+
+		// Persisted into the view's own config (the `collapsedSubgroups`
+		// view option), the same way `hiddenGroups` already is — not kept
+		// as instance state, which only lives as long as this View object
+		// does and is gone the moment Bases recreates it (switching away
+		// and back, reloading the vault, …), silently re-expanding
+		// everything.
+		let collapsedSubgroups = this.config.get('collapsedSubgroups') as string[];
+		if (!Array.isArray(collapsedSubgroups)) collapsedSubgroups = [];
 
 		const widthPx = { small: 200, medium: 240, large: 320 }[
 			this.config.get('boardColumnWidth') as string
@@ -324,7 +331,7 @@ export class NotionBoardView extends BasesView {
 			// instead of sitting flat alongside it; collapsing one hides
 			// every subfolder (and card) nested under it too.
 			const renderSubgroup = (sub: GroupNode, depth: number): void => {
-				const isCollapsed = this.collapsedSubgroups.has(sub.fullKey);
+				const isCollapsed = collapsedSubgroups.includes(sub.fullKey);
 				const subLabel = cardsWrap.createDiv({ cls: 'ntn-board-subgroup-label' });
 				subLabel.setCssProps({ '--ntn-indent': `${depth * 16}px` });
 				const toggleIcon = subLabel.createSpan({ cls: 'ntn-group-toggle' });
@@ -336,11 +343,10 @@ export class NotionBoardView extends BasesView {
 				subLabel.createSpan({ text: sub.key });
 				subLabel.createSpan({ cls: 'ntn-group-count', text: String(countEntries(sub)) });
 				subLabel.addEventListener('click', () => {
-					if (isCollapsed) {
-						this.collapsedSubgroups.delete(sub.fullKey);
-					} else {
-						this.collapsedSubgroups.add(sub.fullKey);
-					}
+					const next = isCollapsed
+						? collapsedSubgroups.filter((k) => k !== sub.fullKey)
+						: [...collapsedSubgroups, sub.fullKey];
+					this.config.set('collapsedSubgroups', next);
 					this.onDataUpdated();
 				});
 				if (isCollapsed) return;
