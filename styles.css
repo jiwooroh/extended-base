@@ -293,6 +293,22 @@
 	height: 15px;
 }
 
+/* A non-Markdown file's extension (pdf, docx, canvas, …), between the icon
+   and the title text. Sized and positioned to sit on the title's own
+   baseline rather than the icon's, since it's text, not a glyph. */
+.ntn-filetype-badge {
+	flex-shrink: 0;
+	align-self: center;
+	font-size: 10px;
+	font-weight: 700;
+	line-height: 1;
+	padding: 2px 4px;
+	border-radius: 3px;
+	background: var(--background-modifier-border);
+	color: var(--ntn-text-muted);
+	letter-spacing: 0.02em;
+}
+
 .ntn-title-text {
 	font-weight: 500;
 	/* A real text-decoration underline (like a hyperlink) rather than a
