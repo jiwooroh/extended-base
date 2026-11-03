@@ -1,9 +1,10 @@
 /**
- * What's shown at the head of a title, wherever this plugin renders one
- * (the table/list/board title cell, a feed card's header): this note's
- * icon, and — for anything that isn't a plain Markdown note — a small
- * file-type badge after it. Shared across all four views so both behave
- * identically everywhere.
+ * What's shown around a title, wherever this plugin renders one (the
+ * table/list/board title cell, a feed card's header): this note's icon at
+ * the head of it, and — for anything that isn't a plain Markdown note — a
+ * small file-type badge pinned to the row's right edge (via CSS `order`,
+ * not DOM position — see `.ntn-filetype-badge` in styles.css). Shared
+ * across all four views so both behave identically everywhere.
  *
  * The icon's only source is the Iconize community plugin's own per-file
  * icon assignment — the real icon a note shows in Obsidian's sidebar —
@@ -84,11 +85,13 @@ export function renderTitleIcon(wrap: HTMLElement, cfg: TitleIconConfig, app: Ap
 }
 
 /**
- * A small badge for the file's own extension (e.g. "PDF", "DOCX") shown
- * right after the icon, to the left of the title text. A Base can list any
- * file in the vault, not just notes, and nothing else in a title cell says
- * what a non-Markdown entry actually is. A plain ".md" note needs no
- * badge — it's what Bases shows by default.
+ * A small badge for the file's own extension (e.g. "PDF", "DOCX"), pinned
+ * to the right edge of the title row (see `.ntn-filetype-badge`'s own
+ * `order` + `margin-left: auto` in styles.css — appending it here, before
+ * the caller even creates the title text span, still lands it on the
+ * right visually). A Base can list any file in the vault, not just notes,
+ * and nothing else in a title cell says what a non-Markdown entry actually
+ * is. A plain ".md" note needs no badge — it's what Bases shows by default.
  */
 function renderFileTypeBadge(wrap: HTMLElement, entry: BasesEntry): void {
 	const ext = entry.file.extension;

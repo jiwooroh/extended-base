@@ -293,18 +293,25 @@
 	height: 15px;
 }
 
-/* A non-Markdown file's extension (pdf, docx, canvas, …), between the icon
-   and the title text. Sized and positioned to sit on the title's own
-   baseline rather than the icon's, since it's text, not a glyph. */
+/* A non-Markdown file's extension (pdf, docx, canvas, …). `order` pushes it
+   past the title text regardless of where it sits in the DOM (it's
+   rendered — see title-icon.ts — before the title text even exists, since
+   both the icon and this badge come from the one shared function every
+   view calls before creating its own title text span), and margin-left:
+   auto then pins it to the row's right edge. A pale, theme-adaptive tint
+   (color-mix against the row's own muted-text color, not a flat gray) so
+   it reads as a quiet tag, not another pill competing with real data. */
 .ntn-filetype-badge {
+	order: 1;
+	margin-left: auto;
 	flex-shrink: 0;
-	align-self: center;
+	align-self: flex-start;
 	font-size: 10px;
 	font-weight: 700;
 	line-height: 1;
 	padding: 2px 4px;
 	border-radius: 3px;
-	background: var(--background-modifier-border);
+	background: color-mix(in srgb, var(--ntn-text-muted) 14%, transparent);
 	color: var(--ntn-text-muted);
 	letter-spacing: 0.02em;
 }
