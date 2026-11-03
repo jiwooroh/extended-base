@@ -362,6 +362,30 @@ Source layout:
 
 ## Changelog
 
+### 1.6.0
+
+- **Fixed:** the board view's folder-grouped subgroups were flattened
+  into one sibling list — collapsing a subfolder never hid its own
+  nested subfolders, and every level rendered at the same indent.
+  Subgroups now render recursively from the real folder tree, each
+  level indented further, file cards indented to match, and collapsing
+  a subfolder hides everything nested under it.
+- **Added:** a folder icon ahead of a nested subfolder's own group
+  header, across table, list, feed, and board — a quick visual cue
+  it's a subfolder, not another top-level group.
+- **Fixed:** collapsing or expanding a board subgroup reset the view's
+  scroll position — both the board's own horizontal column scroll and
+  the page's vertical scroll — back to the top-left on every rebuild.
+  Both are now preserved across every re-render.
+- **Fixed:** a board subgroup's collapsed/expanded state lived only in
+  memory, so it silently reset to all-expanded whenever Obsidian
+  recreated the view (switching away and back, reopening the base, …).
+  It's now persisted in the view's own settings, the same way hidden
+  groups already are.
+- **Added:** a small file-type badge (PDF, DOCX, …) at the right edge
+  of the title row for any non-Markdown file a base lists, since
+  nothing else said what it was. Skipped for plain `.md` notes.
+
 ### 1.5.1
 
 - **Fixed:** a security linter flagged the title icon's `innerHTML`
