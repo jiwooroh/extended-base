@@ -22,7 +22,7 @@ import {
 import { LOG_PREFIX, NOTION_BOARD_VIEW } from '../constants';
 import { PinnedColors, applyPillColor, colorByName, resolvePillColor, resolvePillOpacity } from '../lib/colors';
 import { PillDetection, computePillProps, parsePinnedColors, pillLabel, stripPath } from '../lib/pills';
-import { buildFolderGroups, GroupNode, hideSoleTopLevelFolder, isGroupedByFolder } from '../lib/groups';
+import { buildFolderGroups, countEntries, GroupNode, hideSoleTopLevelFolder, isGroupedByFolder } from '../lib/groups';
 import { getPropertyIcon, getPropertyMetaType, isEditableProp, propBareName } from '../lib/property-types';
 import { syncPillColorToPrettyProperties } from '../lib/pretty-properties-sync';
 import { renamePillValue } from '../lib/rename';
@@ -60,8 +60,14 @@ export class NotionBoardView extends BasesView {
 	private propertyLabelDisplay: 'icon-name' | 'icon' | 'name' | 'none' = 'none';
 	/** The open select editor, if any (also drives outside-click detection). */
 	private selectEditor: SelectEditor | null = null;
-	/** Set of subgroup full keys (nested folders within a column) that are currently collapsed. */
-	private collapsedSubgroups = new Set<string>();
+	/**
+	 * The current render's board-container element. `onDataUpdated` destroys
+	 * and recreates it (along with everything else under `rootEl`) on every
+	 * call via `root.empty()`, which would otherwise silently drop its
+	 * horizontal scroll position every time — this is only ever read, right
+	 * before the next `root.empty()`, to carry that position over.
+	 */
+	private boardContainerEl: HTMLElement | null = null;
 	/** The open column-color picker flyout, if any (also drives outside-click detection). */
 	private colorMenuEl: HTMLElement | null = null;
 
@@ -126,10 +132,44 @@ export class NotionBoardView extends BasesView {
 	}
 
 
+	/** The nearest ancestor above this view's own root that actually scrolls
+	 * vertically — Obsidian's own pane content wrapper, never destroyed by
+	 * this view's `root.empty()` — or null if none is. Checks `overflow-y`
+	 * itself, not just scrollHeight vs. clientHeight: a non-scrolling
+	 * wrapper can still read taller than its own box (margins, a taller
+	 * sibling) without actually being the element that scrolls, which was
+	 * silently picking the wrong ancestor some of the time.
+	 */
+	private findScrollParent(): HTMLElement | null {
+		let el = this.rootEl.parentElement;
+		while (el) {
+			const style = this.rootEl.win.getComputedStyle(el);
+			if ((style.overflowY === 'auto' || style.overflowY === 'scroll') && el.scrollHeight > el.clientHeight) {
+				return el;
+			}
+			el = el.parentElement;
+		}
+		return null;
+	}
+
 	onDataUpdated(): void {
 		// The toolbar may not have existed at construction time; retry until
 		// the patch lands (no-op once it has).
 		this.patchToolbarNew();
+
+		// Captured before anything is destroyed below, and restored once the
+		// new DOM (and its real scrollWidth/scrollHeight) is in place —
+		// every rebuild, not just a subgroup toggle, so the board never
+		// resets to its top-left on any `onDataUpdated` call. Horizontal is
+		// this view's own board-container scrollLeft, which `root.empty()`
+		// always destroys outright along with the element itself; vertical
+		// is Obsidian's own pane scroller, an ancestor `root.empty()` never
+		// touches, captured anyway because the *content* height changes and
+		// the browser is otherwise free to re-clamp it.
+		const prevScrollLeft = this.boardContainerEl?.scrollLeft;
+		const scrollParent = this.findScrollParent();
+		const prevScrollTop = scrollParent?.scrollTop;
+
 		const root = this.rootEl;
 		root.empty();
 
@@ -147,6 +187,16 @@ export class NotionBoardView extends BasesView {
 			? labelDisplay : 'none';
 
 		const boardContainer = root.createDiv({ cls: 'ntn-board-container' });
+		this.boardContainerEl = boardContainer;
+
+		// Persisted into the view's own config (the `collapsedSubgroups`
+		// view option), the same way `hiddenGroups` already is — not kept
+		// as instance state, which only lives as long as this View object
+		// does and is gone the moment Bases recreates it (switching away
+		// and back, reloading the vault, …), silently re-expanding
+		// everything.
+		let collapsedSubgroups = this.config.get('collapsedSubgroups') as string[];
+		if (!Array.isArray(collapsedSubgroups)) collapsedSubgroups = [];
 
 		const widthPx = { small: 200, medium: 240, large: 320 }[
 			this.config.get('boardColumnWidth') as string
@@ -171,31 +221,25 @@ export class NotionBoardView extends BasesView {
 		// the same nested tree table/list use (so the sole top-level
 		// wrapper folder is hidden the same way), but — unlike table/list —
 		// a deeper subfolder does NOT get its own column: every descendant,
-		// however many levels down, is flattened into that top-level
-		// column's `subgroups` and rendered as a labeled card cluster
-		// inside it. A board with one column per nested subfolder doesn't
-		// read as a Kanban board any more; Notion's own folder-grouped
-		// board does the same — one column per top-level folder, deeper
-		// folders shown as sections within it.
-		type BoardSubgroup = { key: string; fullKey: string; entries: BasesEntry[] };
-		const columns: { key: string; fullKey: string; entries: BasesEntry[]; subgroups: BoardSubgroup[] }[] = [];
+		// however many levels down, renders as a labeled card cluster
+		// inside its top-level column instead, indented and nested one
+		// step per real level (not flattened to one step for all of them,
+		// so a subfolder's own subfolder still reads as nested under it,
+		// and collapsing a subfolder collapses everything under it too).
+		// A board with one column per nested subfolder doesn't read as a
+		// Kanban board any more; Notion's own folder-grouped board does
+		// the same — one column per top-level folder, deeper folders
+		// shown as sections within it.
+		const columns: { key: string; fullKey: string; entries: BasesEntry[]; subgroups: GroupNode[] }[] = [];
 		if (folderGrouped) {
 			const roots = hideSoleTopLevelFolder(buildFolderGroups(this.data.groupedData));
-			const flattenDescendants = (node: GroupNode): BoardSubgroup[] => {
-				const result: BoardSubgroup[] = [];
-				for (const child of node.children.values()) {
-					result.push({ key: child.key, fullKey: child.fullKey, entries: child.entries });
-					result.push(...flattenDescendants(child));
-				}
-				return result;
-			};
 			for (const node of roots.values()) {
 				if (node.key) {
 					columns.push({
 						key: node.key,
 						fullKey: node.fullKey,
 						entries: node.entries,
-						subgroups: flattenDescendants(node),
+						subgroups: [...node.children.values()],
 					});
 				} else if (node.entries.length) {
 					columns.push({ key: 'No Status', fullKey: 'No Status', entries: node.entries, subgroups: [] });
@@ -273,36 +317,47 @@ export class NotionBoardView extends BasesView {
 			}
 
 			const totalCount = col.entries.length
-				+ col.subgroups.reduce((sum, sg) => sum + sg.entries.length, 0);
+				+ col.subgroups.reduce((sum, sg) => sum + countEntries(sg), 0);
 			colHeader.createSpan({ cls: 'ntn-group-count', text: String(totalCount) });
 
 			const cardsWrap = colWrap.createDiv({ cls: 'ntn-board-cards' });
 			for (const entry of col.entries) {
-				this.renderCard(cardsWrap, entry, props);
+				this.renderCard(cardsWrap, entry, props, 0);
 			}
 			// Deeper subfolders render as a labeled, collapsible section
 			// inside this column rather than spawning their own column (see
-			// comment above `columns`).
-			for (const sub of col.subgroups) {
-				const isCollapsed = this.collapsedSubgroups.has(sub.fullKey);
+			// comment above `columns`) — recursively, one indent step per
+			// real level, so a subfolder's own subfolder nests under it
+			// instead of sitting flat alongside it; collapsing one hides
+			// every subfolder (and card) nested under it too.
+			const renderSubgroup = (sub: GroupNode, depth: number): void => {
+				const isCollapsed = collapsedSubgroups.includes(sub.fullKey);
 				const subLabel = cardsWrap.createDiv({ cls: 'ntn-board-subgroup-label' });
+				subLabel.setCssProps({ '--ntn-indent': `${depth * 16}px` });
 				const toggleIcon = subLabel.createSpan({ cls: 'ntn-group-toggle' });
 				toggleIcon.setText(isCollapsed ? '▶' : '▼');
+				// Always on, no view option — a quick visual cue this is a
+				// nested subfolder, not another top-level column.
+				const folderIcon = subLabel.createSpan({ cls: 'ntn-group-folder-icon' });
+				setIcon(folderIcon, 'folder');
 				subLabel.createSpan({ text: sub.key });
-				subLabel.createSpan({ cls: 'ntn-group-count', text: String(sub.entries.length) });
+				subLabel.createSpan({ cls: 'ntn-group-count', text: String(countEntries(sub)) });
 				subLabel.addEventListener('click', () => {
-					if (isCollapsed) {
-						this.collapsedSubgroups.delete(sub.fullKey);
-					} else {
-						this.collapsedSubgroups.add(sub.fullKey);
-					}
+					const next = isCollapsed
+						? collapsedSubgroups.filter((k) => k !== sub.fullKey)
+						: [...collapsedSubgroups, sub.fullKey];
+					this.config.set('collapsedSubgroups', next);
 					this.onDataUpdated();
 				});
-				if (isCollapsed) continue;
+				if (isCollapsed) return;
 				for (const entry of sub.entries) {
-					this.renderCard(cardsWrap, entry, props);
+					this.renderCard(cardsWrap, entry, props, depth * 16);
 				}
-			}
+				for (const child of sub.children.values()) {
+					renderSubgroup(child, depth + 1);
+				}
+			};
+			for (const sub of col.subgroups) renderSubgroup(sub, 0);
 
 			// A small "+ New" at the bottom of each column
 			const colNew = colWrap.createDiv({ cls: 'ntn-board-column-new' });
@@ -340,14 +395,24 @@ export class NotionBoardView extends BasesView {
 		newRow.createSpan({ cls: 'ntn-new-plus', text: '+' });
 		newRow.createSpan({ text: 'New' });
 		newRow.addEventListener('click', () => void this.createAndOpenPage());
+
+		// Restore the scroll positions captured at the very top, now that
+		// the new DOM (and its real scrollWidth/scrollHeight) exists.
+		if (prevScrollLeft !== undefined) boardContainer.scrollLeft = prevScrollLeft;
+		if (scrollParent && prevScrollTop !== undefined) scrollParent.scrollTop = prevScrollTop;
 	}
 
 	private renderCard(
 		container: HTMLElement,
 		entry: BasesEntry,
 		props: BasesPropertyId[],
+		indent = 0,
 	): void {
 		const cardEl = container.createDiv({ cls: 'ntn-board-card' });
+		// Matches the subfolder header's own indent one level up, so a
+		// card visibly belongs to the (possibly nested) subfolder section
+		// it's listed under.
+		if (indent) cardEl.setCssProps({ '--ntn-indent': `${indent}px` });
 
 		// Title is always first
 		const titleWrap = cardEl.createDiv({ cls: 'ntn-board-card-title' });

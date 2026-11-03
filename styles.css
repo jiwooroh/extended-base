@@ -293,6 +293,29 @@
 	height: 15px;
 }
 
+/* A non-Markdown file's extension (pdf, docx, canvas, …). `order` pushes it
+   past the title text regardless of where it sits in the DOM (it's
+   rendered — see title-icon.ts — before the title text even exists, since
+   both the icon and this badge come from the one shared function every
+   view calls before creating its own title text span), and margin-left:
+   auto then pins it to the row's right edge. A pale, theme-adaptive tint
+   (color-mix against the row's own muted-text color, not a flat gray) so
+   it reads as a quiet tag, not another pill competing with real data. */
+.ntn-filetype-badge {
+	order: 1;
+	margin-left: auto;
+	flex-shrink: 0;
+	align-self: flex-start;
+	font-size: 10px;
+	font-weight: 700;
+	line-height: 1;
+	padding: 2px 4px;
+	border-radius: 3px;
+	background: color-mix(in srgb, var(--ntn-text-muted) 14%, transparent);
+	color: var(--ntn-text-muted);
+	letter-spacing: 0.02em;
+}
+
 .ntn-title-text {
 	font-weight: 500;
 	/* A real text-decoration underline (like a hyperlink) rather than a
@@ -435,6 +458,21 @@
 	font-weight: 700;
 	font-size: 14px;
 	color: var(--ntn-text);
+}
+
+/* A nested subfolder's group header only (never the top-level folder) —
+   a plain folder glyph ahead of the label, always on. */
+.ntn-group-folder-icon {
+	display: inline-flex;
+	align-items: center;
+	margin-right: 4px;
+	color: var(--ntn-text-muted);
+	flex-shrink: 0;
+}
+
+.ntn-group-folder-icon svg {
+	width: 13px;
+	height: 13px;
 }
 
 /* Board-only: when "Show group color as" includes a label, a folder
@@ -1376,6 +1414,9 @@
 	color: var(--ntn-text-muted);
 	margin-top: 8px;
 	padding-top: 8px;
+	/* --ntn-indent is set per-instance (one step per real nesting level —
+	   a subfolder's own subfolder indents one step further than it). */
+	padding-left: var(--ntn-indent, 0px);
 	border-top: 1px solid var(--ntn-border);
 	cursor: pointer;
 	border-radius: 4px;
@@ -1406,6 +1447,10 @@
 	gap: 6px;
 	cursor: pointer;
 	transition: background 20ms ease-in;
+	/* Matches its subfolder section's own indent (see
+	   .ntn-board-subgroup-label) — .ntn-board-cards is a stretched flex
+	   column, so this margin narrows the card instead of overflowing it. */
+	margin-left: var(--ntn-indent, 0px);
 }
 
 .theme-dark .ntn-board-card {

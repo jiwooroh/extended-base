@@ -285,6 +285,14 @@ export class NotionTableView extends BasesView {
 				});
 
 				if (folderGrouped) {
+					// A nested subfolder (not the column/top-level folder) gets a
+					// plain folder icon ahead of its label, always on — there's
+					// no view option for this, just a quick visual cue that this
+					// header is a subfolder rather than another top-level group.
+					if (depth > 0) {
+						const folderIcon = gCell.createSpan({ cls: 'ntn-group-folder-icon' });
+						setIcon(folderIcon, 'folder');
+					}
 					gCell.createSpan({ cls: 'ntn-group-folder-label', text: node.key });
 				} else {
 					const pill = gCell.createSpan({ cls: 'ntn-pill' });
